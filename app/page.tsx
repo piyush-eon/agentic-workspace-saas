@@ -4,7 +4,7 @@ import { ArrowRight, LayoutGrid, FileText, KanbanSquare, Sparkles, Users } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AgentCanvasDemo } from "@/components/AgentCanvasDemo";
-import { CanvasMock, DocsMock, TasksMock } from "@/components/SurfaceVisuals";
+import { CanvasMock, DocsMock, BoardMock } from "@/components/SurfaceVisuals";
 
 export default function Home() {
   return (
@@ -32,8 +32,8 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Chat with an AI agent that draws on your canvas, writes your docs, and
-            organizes your tasks — live, shape by shape, like a second person in the room.
+            Chat with an AI agent that draws on your canvas and writes your docs, while
+            your whole team works alongside it in real time.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -70,18 +70,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Three surfaces — the proof that this is a "workspace," not just a canvas app.
+      {/* Canvas + docs + team — the proof that this is a "workspace," not just a canvas app.
           Each row alternates image side so the section doesn't read as a flat repeating grid. */}
       <section id="product" className="border-t border-white/10 px-6 py-24 md:px-10">
         <div className="mx-auto max-w-5xl">
           <div className="max-w-xl">
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              One agent, three surfaces
+              One agent, one workspace, your whole team
             </h2>
             <p className="mt-4 text-muted-foreground">
               Outpost isn&apos;t another AI diagram generator. The same agent reasons across
-              your canvas, your docs, and your tasks — turning a rough sketch into a written
-              spec, or a spec into a board, without you copying anything by hand.
+              your canvas and your docs, turning a rough sketch into a written spec without
+              you copying anything by hand. And your team is right there with you.
             </p>
           </div>
 
@@ -90,7 +90,7 @@ export default function Home() {
               reverse={false}
               icon={<LayoutGrid className="size-5" />}
               title="Canvas"
-              description="An infinite whiteboard where the agent drafts flowcharts, architecture diagrams, and journeys — with a visible cursor that draws instead of a black-box generate button."
+              description="An infinite whiteboard where the agent drafts flowcharts, architecture diagrams, and journeys shape by shape, instead of hiding it all behind a black-box generate button."
               bullets={[
                 "Templates for flowcharts, ERDs, architecture, and org charts",
                 "Follow-up edits: ask for changes and it edits shapes in place",
@@ -104,7 +104,7 @@ export default function Home() {
               title="Docs"
               description="Turn any diagram into a written spec. The agent drafts, rewrites, and summarizes in a block-based editor, pulling structure straight from what's on the canvas."
               bullets={[
-                "Block-based editor — headings, lists, quotes, callouts",
+                "Block-based editor: headings, lists, quotes, callouts",
                 "\"Write this diagram up as a spec\" pulls structure automatically",
                 "Rewrite or summarize any section on command",
               ]}
@@ -113,20 +113,20 @@ export default function Home() {
             <SurfaceRow
               reverse={false}
               icon={<KanbanSquare className="size-5" />}
-              title="Tasks"
-              description="Break a project into a kanban board in one prompt, or convert canvas nodes and doc sections directly into tracked tasks."
+              title="Team board"
+              description="Every workspace in your organization lives on one shared board. Drag it from planning to done, and jump in with teammates, with live cursors on the canvas and in the doc."
               bullets={[
-                "\"Break this into tasks\" turns a plan into a board instantly",
-                "Convert canvas nodes or doc sections into tracked tasks",
-                "Drag-and-drop columns, same as any kanban tool",
+                "One kanban board for every workspace in your org",
+                "Live cursors and edits on the canvas and in docs",
+                "Anyone in your org can join any workspace instantly",
               ]}
-              visual={<TasksMock />}
+              visual={<BoardMock />}
             />
           </div>
         </div>
       </section>
 
-      {/* How it works — sets expectations for the live-cursor mechanic before the CTA */}
+      {/* How it works — sets expectations for the shape-by-shape drawing before the CTA */}
       <section id="how-it-works" className="border-t border-white/10 px-6 py-24 md:px-10">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
@@ -134,17 +134,17 @@ export default function Home() {
           </h2>
           <div className="mt-12 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <Step number="01" title="Describe what you need">
-              &ldquo;Map out our onboarding flow&rdquo; — plain language, no diagramming syntax to learn.
-              Or just talk — voice input works too.
+              Just say &ldquo;Map out our onboarding flow.&rdquo; Plain language, no diagramming syntax
+              to learn. Or just talk: voice input works too.
             </Step>
             <Step number="02" title="Watch the agent draw">
-              A labeled cursor moves shape by shape, the same way a teammate would draw over a call.
+              Shapes appear one by one as the agent works, the same way a teammate would draw over a call.
             </Step>
             <Step number="03" title="It checks its own work">
               A second pass reviews the diagram for overlaps or missing links and fixes them automatically.
             </Step>
             <Step number="04" title="Keep iterating together">
-              Ask for changes, pull it into a doc, or turn it into tasks — same agent, same context.
+              Ask for changes, pull it into a doc, or bring in your team. Same agent, same context.
             </Step>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function Home() {
         <div className="mx-auto max-w-3xl text-center">
           <Sparkles className="mx-auto size-6 text-primary" />
           <blockquote className="mt-6 text-2xl font-medium tracking-tight text-balance md:text-3xl">
-            &ldquo;It&apos;s the first AI tool where I actually trust the diagram it gives me —
+            &ldquo;It&apos;s the first AI tool where I actually trust the diagram it gives me,
             because I watched it get built, step by step, instead of guessing what a black box did.&rdquo;
           </blockquote>
           <div className="mt-6 flex items-center justify-center gap-3">

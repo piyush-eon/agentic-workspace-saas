@@ -13,10 +13,16 @@ export function CanvasMock() {
         <rect x="10" y="14" width="26" height="15" rx="1.5" className="fill-white/6 stroke-white/25" strokeWidth="0.4" />
         <text x="23" y="23" textAnchor="middle" className="fill-foreground text-[3px]">User signs up</text>
         <rect x="62" y="14" width="26" height="15" rx="1.5" className="fill-white/6 stroke-white/25" strokeWidth="0.4" />
-        <text x="75" y="23" textAnchor="middle" className="fill-foreground text-[3px]">Send welcome email</text>
+        <text x="75" y="21" textAnchor="middle" className="fill-foreground text-[3px]">
+          <tspan x="75">Send welcome</tspan>
+          <tspan x="75" dy="3.8">email</tspan>
+        </text>
         <line x1="36" y1="21.5" x2="61" y2="21.5" stroke="oklch(0.74 0.16 55)" strokeWidth="0.5" markerEnd="url(#mockArrow)" />
         <rect x="36" y="38" width="26" height="15" rx="1.5" className="fill-white/6 stroke-white/25" strokeWidth="0.4" />
-        <text x="49" y="47" textAnchor="middle" className="fill-foreground text-[3px]">Onboarding checklist</text>
+        <text x="49" y="45" textAnchor="middle" className="fill-foreground text-[3px]">
+          <tspan x="49">Onboarding</tspan>
+          <tspan x="49" dy="3.8">checklist</tspan>
+        </text>
         <path d="M75 29 Q 75 38 62 44" fill="none" stroke="oklch(0.74 0.16 55)" strokeWidth="0.5" markerEnd="url(#mockArrow)" />
       </svg>
     </Frame>
@@ -45,20 +51,27 @@ export function DocsMock() {
   );
 }
 
-export function TasksMock() {
+// Mirrors the real dashboard board: four status columns of workspace cards, with teammate
+// avatars on the cards someone is working in right now.
+export function BoardMock() {
   const columns = [
-    { title: "To do", cards: 2 },
-    { title: "In progress", cards: 1 },
-    { title: "Done", cards: 3 },
+    { title: "Planning", cards: [{ live: null }, { live: null }] },
+    { title: "In progress", cards: [{ live: "bg-sky-400" }, { live: null }] },
+    { title: "In review", cards: [{ live: "bg-violet-400" }] },
+    { title: "Done", cards: [{ live: null }, { live: null }, { live: null }] },
   ];
   return (
     <Frame>
-      <div className="grid h-full grid-cols-3 gap-2.5 p-5">
+      <div className="grid h-full grid-cols-4 gap-2 p-4">
         {columns.map((col) => (
-          <div key={col.title} className="flex flex-col gap-2">
-            <span className="text-[10px] font-medium text-muted-foreground">{col.title}</span>
-            {Array.from({ length: col.cards }).map((_, i) => (
-              <div key={i} className="h-8 rounded-md border border-white/10 bg-white/6" />
+          <div key={col.title} className="flex flex-col gap-2 rounded-lg bg-white/3 p-2">
+            <span className="text-[9px] font-medium whitespace-nowrap text-muted-foreground">{col.title}</span>
+            {col.cards.map((card, i) => (
+              <div key={i} className="flex h-12 flex-col gap-1.5 rounded-md border border-white/10 bg-white/6 p-2">
+                <div className="h-1.5 w-3/4 rounded bg-white/20" />
+                <div className="h-1 w-full rounded bg-white/8" />
+                {card.live && <span className={`mt-auto size-2 self-end rounded-full ${card.live}`} />}
+              </div>
             ))}
           </div>
         ))}

@@ -7,7 +7,7 @@ import type { EntityTableShape } from "@/components/EntityTable/EntityTableShape
 // rotation, etc.) to keep the prompt small; only what the agent needs to reference shapes back.
 export function summarizeCanvasContext(editor: Editor): string {
   const shapes = editor.getCurrentPageShapes();
-  if (shapes.length === 0) return "(empty canvas — no shapes yet)";
+  if (shapes.length === 0) return "(empty canvas, no shapes yet)";
 
   return shapes.map((shape) => summarizeShape(shape)).join("\n");
 }

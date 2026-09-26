@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Share2 } from "lucide-react";
 import type { Block } from "@blocknote/core";
 import type { TLEditorSnapshot } from "tldraw";
 import { prisma } from "@/lib/prisma";
@@ -11,7 +10,8 @@ import { EditableWorkspaceName } from "@/components/EditableWorkspaceName";
 import { DocEditor } from "@/components/DocEditorLoader";
 import { CanvasEditor } from "@/components/CanvasEditor";
 import { AgentToggleButton } from "@/components/AgentToggleButton";
-import { CanvasEditorProvider } from "@/components/CanvasEditorContext";
+import { ShareDialog } from "@/components/ShareDialog";
+import { WorkspaceEditorsProvider } from "@/components/WorkspaceEditorsContext";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -38,6 +38,7 @@ export default async function WorkspacePage({
     where: { id },
     select: {
       name: true,
+      shareToken: true,
       doc: { select: { content: true, yjsState: true } },
       canvas: { select: { content: true } },
     },
@@ -48,10 +49,10 @@ export default async function WorkspacePage({
   const showCanvas = view === "canvas" || view === "both";
 
   return (
-    // CanvasEditorProvider wraps header + panels so AgentToggleButton's panel can read the live
-    // tldraw editor instance CanvasEditor publishes into context on mount — they're siblings,
-    // not parent/child, so context is the bridge.
-    <CanvasEditorProvider>
+    // WorkspaceEditorsProvider wraps header + panels so header UI (agent panel, Share dialog) can
+    // reach the live canvas and doc editors — they're siblings, not parent/child, so context is
+    // the bridge.
+    <WorkspaceEditorsProvider>
       <div className="flex h-dvh flex-col overflow-hidden">
         {/* Real header row (not a floating overlay) — matches Eraser's layout: logo/name left,
             Document/Both/Canvas segmented control centered. Logo doubles as the back-to-dashboard link. */}
@@ -89,10 +90,7 @@ export default async function WorkspacePage({
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Share2 className="size-4" />
-              Share
-            </Button>
+            <ShareDialog workspaceId={id} workspaceName={workspace.name} initialShareToken={workspace.shareToken} />
             <AgentToggleButton />
           </div>
         </header>
@@ -123,6 +121,6 @@ export default async function WorkspacePage({
           )}
         </ResizablePanelGroup>
       </div>
-    </CanvasEditorProvider>
+    </WorkspaceEditorsProvider>
   );
 }

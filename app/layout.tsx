@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Outpost — Agentic Workspace",
-  description: "An AI agent that draws, writes, and organizes alongside you — live.",
+  title: "Outpost: Agentic Workspace",
+  description: "An AI agent that draws and writes alongside you and your team, live.",
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",

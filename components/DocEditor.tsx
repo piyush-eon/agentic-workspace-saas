@@ -11,30 +11,13 @@ import { CollaborationExtension } from "@blocknote/core/yjs";
 import { saveDocContent } from "@/actions/doc";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { useCollaborativeDoc } from "@/hooks/use-collaborative-doc";
+import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
 import type { SupabaseYjsProvider } from "@/lib/supabase-yjs-provider";
 import { toBase64 } from "@/lib/base64";
 import { colorForUser } from "@/lib/utils";
+import { outpostDarkTheme } from "@/lib/blocknote-theme";
 
 const SAVE_DEBOUNCE_MS = 1000;
-
-// BlockNote's built-in "dark" theme ships its own (brownish) palette, not ours — override with
-// the app's actual tokens from globals.css so the doc panel matches the rest of the UI exactly.
-const outpostDarkTheme = {
-  colors: {
-    editor: { text: "oklch(0.97 0.002 285)", background: "oklch(0.13 0.004 285)" },
-    menu: { text: "oklch(0.97 0.002 285)", background: "oklch(0.17 0.005 285)" },
-    tooltip: { text: "oklch(0.97 0.002 285)", background: "oklch(0.17 0.005 285)" },
-    hovered: { text: "oklch(0.97 0.002 285)", background: "oklch(0.22 0.006 285)" },
-    selected: { text: "oklch(0.93 0.03 60)", background: "oklch(0.27 0.02 55)" },
-    disabled: { text: "oklch(0.64 0.01 285)", background: "oklch(0.22 0.006 285)" },
-    shadow: "oklch(0 0 0 / 30%)",
-    border: "oklch(1 0 0 / 10%)",
-    sideMenu: "oklch(0.64 0.01 285)",
-    highlights: {},
-  },
-  borderRadius: 8,
-  fontFamily: "var(--font-geist-sans)",
-};
 
 type DocEditorProps = {
   workspaceId: string;
@@ -78,6 +61,13 @@ function CollaborativeEditor({
   const editor = useCreateBlockNote({
     extensions: [CollaborationExtension({ fragment, user, provider })],
   });
+
+  // Publish the live editor so the Share dialog can export it.
+  const { setDocEditor } = useWorkspaceEditors();
+  useEffect(() => {
+    setDocEditor(editor);
+    return () => setDocEditor(null);
+  }, [editor, setDocEditor]);
 
   // Docs saved before collaboration existed only have JSON — import it once into the shared doc.
   useEffect(() => {

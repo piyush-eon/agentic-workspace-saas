@@ -38,7 +38,7 @@
 | `/dashboard` | Kanban board of the active org's workspaces (see "Workspace board"), "New" button |
 | `/workspace/[id]` | Doc + canvas side by side, `?view=doc\|canvas` toggle, agent panel |
 | `/workspace/[id]/settings` | Rename, members, permissions, delete |
-| `/shared/[token]` | Public/read-only shared view |
+| `/shared/[token]` | Public read-only view of the doc and canvas (see "Sharing & PDF Export") |
 | `/pricing` | Free vs Pro (agent usage limits) |
 | `/api/*` | Route handlers (agent runs, CRUD, webhooks) |
 
@@ -142,6 +142,16 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
   - tldraw documents it as prototyping-only, with no uptime guarantees.
 - **Tell viewers:** for a real product, deploy your own sync server with tldraw's Cloudflare template (`npm create tldraw@latest -- --template sync-cloudflare`), register the custom `entity-table` shape on it, check Clerk org membership before a client joins a room, then swap `useSyncDemo` for `useSync({ uri })` in `components/CanvasEditor.tsx`. Once the server stores the canvas, the Postgres canvas autosave can be removed.
 
+## Sharing & PDF Export
+
+- **Share dialog** (header Share button): an on/off switch for a public read-only link, plus Copy and Reset. Turning sharing on (or resetting) generates a fresh `Workspace.shareToken`, so old links stop working; off sets it to null.
+- **Shared page** `/shared/<token>`: no sign-in, read-only doc (from `Doc.content` JSON) and canvas (from the last saved Postgres snapshot, not the live room). Marked noindex.
+- **Doc PDF:** a direct download with real, selectable text, built from the live doc editor by BlockNote's own exporter (`@blocknote/xl-pdf-exporter/react-pdf` + `@react-pdf/renderer`, both lazy-loaded on click). We use the react-pdf variant rather than the newer Typst one, which downloads a 25 MB WebAssembly compiler on first export; the react-pdf variant is marked deprecated but ships in 0.54 and our version is pinned to 0.54.x.
+- **License consequence:** `@blocknote/xl-pdf-exporter` is **GPL-3.0** (or a paid BlockNote Business license). Using it means the Outpost repo itself is released under GPL-3.0: the repo has a `LICENSE` file with the GPL-3.0 text and `"license": "GPL-3.0-only"` in `package.json`. Mention this to viewers: anyone reusing the code in a closed-source product must either drop the PDF exporter or buy BlockNote's commercial license.
+- **Live editors for export:** `WorkspaceEditorsContext` shares the live doc and canvas editors with the header; each export button is disabled while its panel isn't mounted (Document-only or Canvas-only view).
+- **Canvas PDF:** tldraw renders the shapes to a 2x PNG (`editor.toImageDataUrl`), and jsPDF (MIT, lazy-loaded) wraps it in a single page of the same size. Custom ERD tables are included via tldraw's HTML fallback for shapes without `toSvg`.
+- **Known limit:** the shared page reads the saved copies, so edits made in the last second or so (before the debounced save) may be missing there. Exports use the live editors, so they're always current.
+
 ## Doc Collaboration
 
 - **How it works:** BlockNote's built-in Yjs collaboration (`CollaborationExtension` from `@blocknote/core/yjs`) handles merging edits and live cursors. The connection between browsers is our own small provider (`lib/supabase-yjs-provider.ts`) on a **Supabase Realtime** broadcast channel per doc (`doc:<workspaceId>`), with events for doc updates, cursors, and newcomers asking peers for unsaved edits.
@@ -155,6 +165,7 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 - Core BlockNote library is **MPL 2.0** — free to use in commercial/closed-source apps, no key needed.
 - BlockNote **AI features** are under a separate dual-license ("XL") tier: free if the consuming project is **open source**, otherwise requires a paid commercial license (bundled into their Business subscription).
 - **Decision:** this project is being open-sourced (repo will be public for viewers to clone), so we qualify for free use of BlockNote AI under the open-source exception.
+- **Precisely:** the XL packages are GPL-3.0, so "open source" means the repo must be GPL-3.0 licensed, not just public. XL packages in use: `@blocknote/xl-pdf-exporter` (see "Sharing & PDF Export").
 - Note for future: if this ever pivots to a closed-source/monetized product, BlockNote AI would need a commercial license at that point — the base editor itself would remain free regardless (MPL 2.0).
 - Tiptap (the library BlockNote sits on) has a similar open-core split worth remembering: **core editor is MIT/free**, but Tiptap's own **Cloud Platform** (hosted realtime collab, comments, doc history, their AI Toolkit — from $49/mo, no free tier) is separate and not something we need, since realtime sync/presence is being built ourselves via tldraw sync and Supabase Realtime.
 
@@ -240,4 +251,4 @@ All tools take a **caller-assigned `id` string** (not DB-generated) so the agent
 
 - Chapter-by-chapter video outline / script — not yet created.
 - Final title/thumbnail line — leaning toward "Agentic Workspace App" but not locked.
-- Landing page "three surfaces" section still shows a Tasks mockup (`TasksMock` in `components/SurfaceVisuals.tsx`) — replace it (e.g. with the workspace board) now that tasks is cut.
+- Landing page copy still promises features that aren't built: the self-critique pass, canvas templates and voice input. Agent cursor wording was removed; the hero demo's animated cursor visual stays on purpose.

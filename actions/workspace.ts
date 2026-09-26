@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { checkUser } from "@/actions/check-user";
@@ -97,4 +98,19 @@ export async function moveWorkspace(workspaceId: string, status: WorkspaceStatus
     where: { id: workspaceId },
     data: { status, position },
   });
+}
+
+// Turning sharing on creates a fresh token, so re-enabling never revives an old link.
+// Resetting is the same as turning it on again: the previous link stops working.
+export async function setWorkspaceSharing(workspaceId: string, enabled: boolean) {
+  if (!(await canAccessWorkspace(workspaceId))) throw new Error("Workspace not found");
+
+  const { shareToken } = await prisma.workspace.update({
+    where: { id: workspaceId },
+    data: { shareToken: enabled ? randomBytes(24).toString("base64url") : null },
+    select: { shareToken: true },
+  });
+
+  revalidatePath(`/workspace/${workspaceId}`);
+  return shareToken;
 }

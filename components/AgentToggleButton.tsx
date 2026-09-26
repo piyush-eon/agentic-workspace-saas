@@ -5,7 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgentChatPanel } from "@/components/AgentChatPanel";
-import { useCanvasEditorContext } from "@/components/CanvasEditorContext";
+import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
 import { useCanvasAgentChat } from "@/hooks/use-canvas-agent-chat";
 
 // Owns the open/closed state for the agent chat panel — needs a client boundary since
@@ -14,7 +14,7 @@ import { useCanvasAgentChat } from "@/hooks/use-canvas-agent-chat";
 // closing/reopening the panel doesn't wipe the conversation.
 export function AgentToggleButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const { editor } = useCanvasEditorContext();
+  const { canvasEditor: editor } = useWorkspaceEditors();
   const chat = useCanvasAgentChat(editor);
 
   return (

@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       {workspaces.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-24 text-center text-muted-foreground">
           <LayoutGrid className="size-8 opacity-50" />
-          <p>No workspaces yet — create one to get started.</p>
+          <p>No workspaces yet. Create one to get started.</p>
         </div>
       ) : (
         <WorkspaceBoard workspaces={workspaces} />

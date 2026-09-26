@@ -23,7 +23,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { EntityTableShapeUtil } from "@/components/EntityTable/EntityTableShapeUtil";
 import { AddEntityTableButton } from "@/components/EntityTable/AddEntityTableButton";
 import { snapArrowBindingToRow } from "@/components/EntityTable/snapArrowToRow";
-import { useCanvasEditorContext } from "@/components/CanvasEditorContext";
+import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
 import { colorForUser } from "@/lib/utils";
 
 const SAVE_DEBOUNCE_MS = 1000;
@@ -55,7 +55,7 @@ export function CanvasEditor({
   initialSnapshot: TLEditorSnapshot | null;
 }) {
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { setEditor } = useCanvasEditorContext();
+  const { setCanvasEditor } = useWorkspaceEditors();
   const { user } = useUser();
 
   // Gives other collaborators this user's real name/avatar on their cursor instead of "New User".
@@ -98,7 +98,7 @@ export function CanvasEditor({
   const store = useSyncDemo({ roomId: `outpost-${workspaceId}`, shapeUtils, users });
 
   const handleMount = (editor: Editor) => {
-    setEditor(editor);
+    setCanvasEditor(editor);
     // Seed from Postgres only when the room is empty, so a joining user doesn't overwrite
     // what others have already drawn.
     if (initialSnapshot && editor.getCurrentPageShapeIds().size === 0) {
@@ -133,10 +133,14 @@ export function CanvasEditor({
       },
       { source: "user", scope: "all" }
     );
+
+    // Clear it on unmount (e.g. switching to the Document view) so nothing keeps a disposed editor.
+    return () => setCanvasEditor(null);
   };
 
   return (
-    <div className="h-full [&_.tlui-main-toolbar--vertical]:top-4!">
+    // isolate keeps tldraw's high z-index layers inside the canvas, so dialogs render above them.
+    <div className="isolate h-full [&_.tlui-main-toolbar--vertical]:top-4!">
       {/* tldraw's default vertical-toolbar top offset (90px) reserves space for the page menu +
           "back to content" button, both of which we hide — pull it up to match. !important is
           needed here since tldraw.css loads after globals.css in the bundle (imported inside

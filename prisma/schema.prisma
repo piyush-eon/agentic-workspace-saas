@@ -51,6 +51,8 @@ model Workspace {
   // take the midpoint between its neighbors — only the moved card ever gets written.
   status      WorkspaceStatus @default(PLANNING)
   position    Float           @default(0)
+  // Public read-only link token; null means sharing is off. Resetting it kills old links.
+  shareToken  String?         @unique
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
