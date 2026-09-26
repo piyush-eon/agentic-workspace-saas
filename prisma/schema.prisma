@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum WorkspaceStatus {
+  PLANNING
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Workspaces this user created — membership/roles for all workspaces live in Clerk Organizations,
+  // not here, so this is just "who to blame/bill" rather than an access-control source of truth.
+  createdWorkspaces Workspace[]
+  actionLogs        AgentActionLog[]
+}
+
+model Workspace {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  creatorId   String
+  // Clerk Organization id — the membership/role source of truth (org:admin, org:member,
+  // org:viewer). One org can own many workspaces (not unique); nullable because a solo user's
+  // personal workspace has no org behind it under Membership-optional mode.
+  clerkOrgId  String?
+  // Dashboard kanban column + order within it. position is a float so a dropped card can
+  // take the midpoint between its neighbors — only the moved card ever gets written.
+  status      WorkspaceStatus @default(PLANNING)
+  position    Float           @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  creator    User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  // Every workspace is always exactly one doc + one canvas, paired — not a generic list of
+  // surfaces. Both are created alongside the workspace itself.
+  doc        Doc?
+  canvas     Canvas?
+  actionLogs AgentActionLog[]
+
+  @@index([creatorId])
+  @@index([clerkOrgId])
+}
+
+model Doc {
+  id          String   @id @default(cuid())
+  workspaceId String   @unique
+  // BlockNote block JSON — a readable copy for server-side features (agent, share view).
+  content     Json?
+  // Yjs document state — the real-time collaboration source of truth.
+  yjsState    Bytes?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Canvas {
+  id          String   @id @default(cuid())
+  workspaceId String   @unique
+  // tldraw shape/store snapshot.
+  content     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// One row per agent tool-call invocation — usage metering + audit trail for cross-surface tools.
+model AgentActionLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  toolName    String
+  input       Json?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([userId])
+}

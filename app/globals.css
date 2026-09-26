@@ -1,0 +1,120 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* Bind Tailwind's font-sans to the Geist variable next/font actually injects */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Outpost is dark-mode only, so :root and .dark share one palette — no light variant to maintain. */
+:root,
+.dark {
+  --background: oklch(0.13 0.004 285);
+  --foreground: oklch(0.97 0.002 285);
+  --card: oklch(0.17 0.005 285);
+  --card-foreground: oklch(0.97 0.002 285);
+  --popover: oklch(0.18 0.005 285);
+  --popover-foreground: oklch(0.97 0.002 285);
+  /* Amber accent — brand color, deliberately not the generic AI-purple */
+  --primary: oklch(0.74 0.16 55);
+  --primary-foreground: oklch(0.15 0.02 55);
+  --secondary: oklch(0.24 0.006 285);
+  --secondary-foreground: oklch(0.97 0.002 285);
+  --muted: oklch(0.22 0.006 285);
+  --muted-foreground: oklch(0.64 0.01 285);
+  --accent: oklch(0.27 0.02 55);
+  --accent-foreground: oklch(0.93 0.03 60);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.74 0.16 55 / 50%);
+  --chart-1: oklch(0.74 0.16 55);
+  --chart-2: oklch(0.6 0.14 40);
+  --chart-3: oklch(0.5 0.02 285);
+  --chart-4: oklch(0.4 0.01 285);
+  --chart-5: oklch(0.3 0.01 285);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.15 0.004 285);
+  --sidebar-foreground: oklch(0.97 0.002 285);
+  --sidebar-primary: oklch(0.74 0.16 55);
+  --sidebar-primary-foreground: oklch(0.15 0.02 55);
+  --sidebar-accent: oklch(0.22 0.006 285);
+  --sidebar-accent-foreground: oklch(0.97 0.002 285);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.74 0.16 55 / 50%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground relative;
+  }
+
+  html {
+    @apply font-sans;
+  }
+}
+
+/* App-wide film-grain overlay. `overlay` blend mode barely shows up against our near-black
+   background, so this uses `screen` (which only ever lightens) at a higher opacity instead.
+   position: absolute (not fixed) so it scrolls with the page instead of staying pinned to
+   the viewport — html/body need position: relative for this to anchor to full document height.
+   z-30 sits above the fixed header (z-20, translucent) so the grain reads through it too,
+   but stays below interactive overlays (dialog/sheet/dropdown/tooltip, all z-50). */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-repeat: repeat;
+}
