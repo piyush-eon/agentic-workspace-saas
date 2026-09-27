@@ -229,23 +229,15 @@ Fine-grained primitives, not coarse composite tools — one tool per tldraw shap
 
 **Context injection (decided): Option A — always inject current canvas state before every agent turn.** Before each agent invocation, the backend reads current shapes (id, type, label, position) and includes them in context, so the model only ever references real shape ids it's actually been told about — rather than inventing/recalling ids and relying on tool-level error-and-retry to self-correct. Costs some extra tokens on every call, but keeps agent behavior reliable for a live demo, which matters more here than the token savings from the leaner alternative.
 
-**Canvas tools** (Zod schemas, Vercel AI SDK tool-calling):
-- `createRectangle` / `createEllipse` — id, position, width, height, label, style
-- `createText` — id, position, text, fontSize
-- `createArrow` — id, fromShapeId/toShapeId (or raw fromPoint/toPoint), label
-- `updateShape` — id + any of position/width/height/label/style
-- `deleteShape` — id
-- `groupShapes` — groupId, shapeIds[], label
+**Where it lives:** `lib/agent-tools.ts` is the single source of every tool's description and Zod schema; the API route (`app/api/agent/route.ts`) passes them to `streamText` with no `execute`, and the browser runs them against the live editors (`lib/agent-canvas.ts`, `lib/agent-doc.ts`, routed by `hooks/use-workspace-agent-chat.ts`). Every request, including the automatic follow-ups after tool calls, carries a fresh summary of both the canvas (shape ids, labels, table columns) and the doc (block ids, types, Markdown). A tool always returns `{ success }` or `{ success: false, error }`, including when its surface isn't open, so the chat never hangs waiting on a missing output.
 
-All tools take a **caller-assigned `id` string** (not DB-generated) so the agent can reference a shape it just created later in the same turn (e.g. "draw an arrow from rect-1 to rect-2") before any DB round-trip happens.
+**Canvas tools:** `createRectangle`, `createEllipse`, `createText`, `createArrow`, `updateShape`, `deleteShape`, plus the ERD tools `createEntityTable`, `addColumn`, `updateColumn`, `removeColumn`, `connectRelationship` (anchors the arrow on the named PK and FK rows). New shapes take a **caller-assigned `id`** so later calls in the same turn can reference them; existing shapes are referenced by their real ids from the context.
 
-**Follow-up edits and the self-critique pass are not separate tools** — both reuse the same canvas tool set above with a different system prompt (self-critique: "review this diagram for overlaps/missing connections") plus the current canvas state as context. Keeps the tool surface small; self-critique is a behavior, not a new capability.
+**Doc tools:** the model writes Markdown, which BlockNote parses into blocks. `insertDocContent` (append, or after a block id; fills an empty doc), `updateDocBlock` (rewrites a block in place, keeping its id), `deleteDocBlocks`, `replaceDoc` (full rewrites only).
 
-**Cross-surface tools** (the part that actually justifies the "workspace," not just "canvas," naming):
-- `summarizeToDoc` — writes the current canvas up as structured blocks in the workspace's doc ("write up this diagram as a spec")
-- Kept as distinct, nameable tools rather than one generic "move data between surfaces" tool — more reliable for the model to invoke correctly, and produces a readable audit trail (each tool's name is self-explanatory) wherever tool invocations get logged.
+**Choosing the surface:** if the user names one ("in the doc", "just the diagram"), only that one changes. Otherwise the agent decides from the request (visual structure on the canvas, prose in the doc, both when needed) and can convert between them ("write up this diagram as a spec", "draw what the doc describes"). This cross-surface editing is what earns the "workspace" naming.
 
-**Docs tools:** `writeDocBlock` (append/replace a BlockNote block — paragraph/heading/list item/quote).
+**Follow-up edits and the self-critique pass are not separate tools**: both reuse the same tools with the current state as context (self-critique would be a second pass with a "review for overlaps/missing connections" prompt; not built yet).
 
 ## Open / Next Steps (not yet decided)
 

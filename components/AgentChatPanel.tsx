@@ -4,24 +4,14 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { Send, Square, Wand2 } from "lucide-react";
 import { isToolUIPart, isDynamicToolUIPart } from "ai";
-import type { Editor } from "tldraw";
-import type { useCanvasAgentChat } from "@/hooks/use-canvas-agent-chat";
-import { summarizeCanvasContext } from "@/components/summarizeCanvasContext";
+import type { WorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 import { Button } from "@/components/ui/button";
 
 const DEFAULT_WIDTH = 360;
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 640;
 
-export function AgentChatPanel({
-  chat,
-  editor,
-  onClose,
-}: {
-  chat: ReturnType<typeof useCanvasAgentChat>;
-  editor: Editor | null;
-  onClose: () => void;
-}) {
+export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; isReady: boolean }) {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [input, setInput] = useState("");
   const isDragging = useRef(false);
@@ -44,20 +34,16 @@ export function AgentChatPanel({
     isDragging.current = false;
   };
 
+  const isBusy = status === "submitted" || status === "streaming";
+
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || !editor) return;
-    // Full current canvas state goes along with every turn (not just the first), per the plan
-    // doc's context-injection decision — keeps the model from ever referencing a shape id it
-    // wasn't actually told about.
-    sendMessage(
-      { text: trimmed },
-      { body: { canvasContext: summarizeCanvasContext(editor) } }
-    );
+    // Enter must not send mid-response either: a second request running alongside the first
+    // makes the SDK re-add the in-progress assistant message, duplicating its id.
+    if (!trimmed || !isReady || isBusy) return;
+    sendMessage({ text: trimmed });
     setInput("");
   };
-
-  const isBusy = status === "submitted" || status === "streaming";
 
   return (
     <div
@@ -88,8 +74,8 @@ export function AgentChatPanel({
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Ask the agent to draw a diagram, add an ERD table, or connect two
-            tables.
+            Ask the agent to draw a diagram, write or edit the doc, or both. Say
+            &ldquo;in the doc&rdquo; or &ldquo;on the canvas&rdquo; to keep it to one side.
           </p>
         ) : (
           messages.map((message) => (
@@ -169,7 +155,7 @@ export function AgentChatPanel({
           }}
           placeholder="Ask the agent..."
           rows={1}
-          disabled={!editor}
+          disabled={!isReady}
           className="max-h-32 flex-1 resize-none rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-ring disabled:opacity-50"
         />
         {isBusy ? (
@@ -177,7 +163,7 @@ export function AgentChatPanel({
             <Square className="size-3.5" />
           </Button>
         ) : (
-          <Button size="icon" onClick={handleSend} disabled={!input.trim() || !editor}>
+          <Button size="icon" onClick={handleSend} disabled={!input.trim() || !isReady}>
             <Send className="size-4" />
           </Button>
         )}

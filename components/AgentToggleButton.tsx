@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgentChatPanel } from "@/components/AgentChatPanel";
 import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
-import { useCanvasAgentChat } from "@/hooks/use-canvas-agent-chat";
+import { useWorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 
 // Owns the open/closed state for the agent chat panel — needs a client boundary since
 // page.tsx is a server component, so this is the button plus the panel it toggles. The chat
@@ -14,8 +14,8 @@ import { useCanvasAgentChat } from "@/hooks/use-canvas-agent-chat";
 // closing/reopening the panel doesn't wipe the conversation.
 export function AgentToggleButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const { canvasEditor: editor } = useWorkspaceEditors();
-  const chat = useCanvasAgentChat(editor);
+  const { canvasEditor, docEditor } = useWorkspaceEditors();
+  const chat = useWorkspaceAgentChat({ canvasEditor, docEditor });
 
   return (
     <>
@@ -32,7 +32,7 @@ export function AgentToggleButton() {
           </>
         )}
       </Button>
-      {isOpen && <AgentChatPanel chat={chat} editor={editor} onClose={() => setIsOpen(false)} />}
+      {isOpen && <AgentChatPanel chat={chat} isReady={!!canvasEditor || !!docEditor} />}
     </>
   );
 }
