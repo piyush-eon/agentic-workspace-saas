@@ -8,6 +8,7 @@ import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-p
 import { deleteWorkspace, moveWorkspace } from "@/actions/workspace";
 import { useFetch } from "@/hooks/use-fetch";
 import type { WorkspaceStatus } from "@/lib/generated/prisma/enums";
+import { WORKSPACE_STATUSES } from "@/lib/workspace-status";
 import { WorkspaceDialog } from "@/components/WorkspaceDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,13 +35,6 @@ type BoardWorkspace = {
   status: WorkspaceStatus;
   position: number;
 };
-
-const COLUMNS: { status: WorkspaceStatus; title: string }[] = [
-  { status: "PLANNING", title: "Planning" },
-  { status: "IN_PROGRESS", title: "In progress" },
-  { status: "IN_REVIEW", title: "In review" },
-  { status: "DONE", title: "Done" },
-];
 
 function columnItems(workspaces: BoardWorkspace[], status: WorkspaceStatus) {
   return workspaces.filter((w) => w.status === status).sort((a, b) => a.position - b.position);
@@ -104,7 +98,7 @@ export function WorkspaceBoard({ workspaces }: { workspaces: BoardWorkspace[] })
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {COLUMNS.map((column) => {
+        {WORKSPACE_STATUSES.map((column) => {
           const columnWorkspaces = columnItems(items, column.status);
           return (
             <div key={column.status} className="flex flex-col rounded-xl border border-white/8 bg-white/2">

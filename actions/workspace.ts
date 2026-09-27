@@ -8,6 +8,12 @@ import { canAccessWorkspace } from "@/lib/workspace-access";
 import { prisma } from "@/lib/prisma";
 import { WorkspaceStatus } from "@/lib/generated/prisma/enums";
 
+// Workspaces are listed on both the dashboard (recent) and the board page.
+function revalidateWorkspaceLists() {
+  revalidatePath("/dashboard");
+  revalidatePath("/workspaces");
+}
+
 // A workspace is always exactly one Doc + one Canvas, so both are created in the same
 // transaction as the Workspace row — never left dangling without a pair.
 export async function createWorkspace(name: string, description?: string) {
@@ -42,7 +48,7 @@ export async function createWorkspace(name: string, description?: string) {
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidateWorkspaceLists();
   return workspace;
 }
 
@@ -61,7 +67,7 @@ export async function updateWorkspace(workspaceId: string, name: string, descrip
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidateWorkspaceLists();
   revalidatePath(`/workspace/${workspaceId}`);
   return workspace;
 }
@@ -84,7 +90,7 @@ export async function deleteWorkspace(workspaceId: string) {
 
   // Doc, canvas and agent logs cascade-delete with the workspace.
   await prisma.workspace.delete({ where: { id: workspaceId } });
-  revalidatePath("/dashboard");
+  revalidateWorkspaceLists();
 }
 
 // Called after a board drag — the client has already moved the card, so no revalidatePath.

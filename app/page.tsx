@@ -1,39 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, LayoutGrid, FileText, KanbanSquare, Sparkles, Users } from "lucide-react";
+import {
+  ArrowRight,
+  LayoutGrid,
+  FileText,
+  KanbanSquare,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AgentCanvasDemo } from "@/components/AgentCanvasDemo";
 import { CanvasMock, DocsMock, BoardMock } from "@/components/SurfaceVisuals";
+import { MapAnnotations } from "@/components/MapAnnotations";
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      {/* Hero — the glow + grain give the flat dark bg some depth without a busy illustration */}
-      <section className="relative overflow-hidden px-6 pt-10 pb-24 md:px-10 md:pt-16">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-40 -z-10 mx-auto h-140 w-225 rounded-full opacity-30 blur-3xl"
-          style={{ background: "radial-gradient(closest-side, oklch(0.74 0.16 55 / 0.55), transparent)" }}
-        />
-
+      {/* Hero, over the topographic contours that give Outpost its look */}
+      <section className="topo-bg px-6 pt-10 pb-24 md:px-10 md:pt-16">
+        <MapAnnotations />
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-          <Badge variant="outline" className="gap-1.5 border-white/15 bg-white/3 px-3 py-1 text-xs font-normal text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-primary" />
-            Now in early access
-          </Badge>
+          <SectionLabel>Expedition 01 · Early access</SectionLabel>
 
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
-            An{" "}
-            <span className="bg-linear-to-br from-foreground via-foreground to-primary bg-clip-text text-transparent">
-              outpost
-            </span>{" "}
-            for whatever you&apos;re building
+          <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+            An <span className="text-primary">outpost</span> for whatever
+            you&apos;re building
           </h1>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Chat with an AI agent that draws on your canvas and writes your docs, while
-            your whole team works alongside it in real time.
+            Chat with an AI agent that draws on your canvas and writes your
+            docs, while your whole team works alongside it in real time.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -48,9 +42,24 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Product demo — this is the whole pitch: the agent visibly acting, not a chat log */}
-        <div className="mx-auto mt-16 max-w-4xl">
-          <AgentCanvasDemo />
+        {/* Product walkthrough. Muted + playsInline are required for autoplay on mobile; WebM is
+            smaller, with MP4 as the fallback for browsers without VP9. */}
+        <div className="survey-frame scroll-tilt mx-auto mt-16 max-w-5xl">
+          {/* A slightly narrower frame than the 16:9 video, so object-cover trims the sides. */}
+          <div className="aspect-[16/9.25] overflow-hidden rounded-2xl border border-white/10 bg-card shadow-2xl shadow-black/40">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/videos/hero-poster.jpg"
+              aria-label="Outpost walkthrough: the agent draws an architecture diagram and writes the spec"
+              className="size-full object-cover"
+            >
+              <source src="/videos/hero.webm" type="video/webm" />
+              <source src="/videos/hero.mp4" type="video/mp4" />
+            </video>
+          </div>
         </div>
       </section>
 
@@ -72,16 +81,21 @@ export default function Home() {
 
       {/* Canvas + docs + team — the proof that this is a "workspace," not just a canvas app.
           Each row alternates image side so the section doesn't read as a flat repeating grid. */}
-      <section id="product" className="border-t border-white/10 px-6 py-24 md:px-10">
+      <section
+        id="product"
+        className="border-t border-white/10 px-6 py-24 md:px-10"
+      >
         <div className="mx-auto max-w-5xl">
           <div className="max-w-xl">
+            <SectionLabel>01 · Surfaces</SectionLabel>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
               One agent, one workspace, your whole team
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Outpost isn&apos;t another AI diagram generator. The same agent reasons across
-              your canvas and your docs, turning a rough sketch into a written spec without
-              you copying anything by hand. And your team is right there with you.
+              Outpost isn&apos;t another AI diagram generator. The same agent
+              reasons across your canvas and your docs, turning a rough sketch
+              into a written spec without you copying anything by hand. And your
+              team is right there with you.
             </p>
           </div>
 
@@ -105,7 +119,7 @@ export default function Home() {
               description="Turn any diagram into a written spec. The agent drafts, rewrites, and summarizes in a block-based editor, pulling structure straight from what's on the canvas."
               bullets={[
                 "Block-based editor: headings, lists, quotes, callouts",
-                "\"Write this diagram up as a spec\" pulls structure automatically",
+                '"Write this diagram up as a spec" pulls structure automatically',
                 "Rewrite or summarize any section on command",
               ]}
               visual={<DocsMock />}
@@ -127,24 +141,32 @@ export default function Home() {
       </section>
 
       {/* How it works — sets expectations for the shape-by-shape drawing before the CTA */}
-      <section id="how-it-works" className="border-t border-white/10 px-6 py-24 md:px-10">
+      <section
+        id="how-it-works"
+        className="border-t border-white/10 px-6 py-24 md:px-10"
+      >
         <div className="mx-auto max-w-5xl">
+          <SectionLabel>02 · The route</SectionLabel>
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             Watch it think, not just the result
           </h2>
           <div className="mt-12 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <Step number="01" title="Describe what you need">
-              Just say &ldquo;Map out our onboarding flow.&rdquo; Plain language, no diagramming syntax
-              to learn. Or just talk: voice input works too.
+              Just say &ldquo;Map out our onboarding flow.&rdquo; Plain
+              language, no diagramming syntax to learn. Or just talk: voice
+              input works too.
             </Step>
             <Step number="02" title="Watch the agent draw">
-              Shapes appear one by one as the agent works, the same way a teammate would draw over a call.
+              Shapes appear one by one as the agent works, the same way a
+              teammate would draw over a call.
             </Step>
             <Step number="03" title="It checks its own work">
-              A second pass reviews the diagram for overlaps or missing links and fixes them automatically.
+              A second pass reviews the diagram for overlaps or missing links
+              and fixes them automatically.
             </Step>
             <Step number="04" title="Keep iterating together">
-              Ask for changes, pull it into a doc, or bring in your team. Same agent, same context.
+              Ask for changes, pull it into a doc, or bring in your team. Same
+              agent, same context.
             </Step>
           </div>
         </div>
@@ -153,10 +175,11 @@ export default function Home() {
       {/* Testimonial — early-access framing kept honest since there's no real customer base yet */}
       <section className="border-t border-white/10 px-6 py-24 md:px-10">
         <div className="mx-auto max-w-3xl text-center">
-          <Sparkles className="mx-auto size-6 text-primary" />
-          <blockquote className="mt-6 text-2xl font-medium tracking-tight text-balance md:text-3xl">
-            &ldquo;It&apos;s the first AI tool where I actually trust the diagram it gives me,
-            because I watched it get built, step by step, instead of guessing what a black box did.&rdquo;
+          <SectionLabel>03 · Field notes</SectionLabel>
+          <blockquote className="mt-2 text-2xl font-medium tracking-tight text-balance md:text-3xl">
+            &ldquo;It&apos;s the first AI tool where I actually trust the
+            diagram it gives me, because I watched it get built, step by step,
+            instead of guessing what a black box did.&rdquo;
           </blockquote>
           <div className="mt-6 flex items-center justify-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary">
@@ -164,16 +187,25 @@ export default function Home() {
             </div>
             <div className="text-left text-sm">
               <p className="font-medium">Early access tester</p>
-              <p className="text-muted-foreground">Product designer, seed-stage startup</p>
+              <p className="text-muted-foreground">
+                Product designer, seed-stage startup
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Closing CTA */}
-      <section className="border-t border-white/10 px-6 py-24 md:px-10">
+      {/* Closing CTA, back over the map so the page opens and closes on it */}
+      <section className="topo-bg border-t border-white/10 px-6 py-28 md:px-10">
+        <MapAnnotations />
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-          <Image src="/brand/mascot-dark.png" alt="" width={40} height={40} className="opacity-80" />
+          <Image
+            src="/brand/mascot-dark.png"
+            alt=""
+            width={40}
+            height={40}
+            className="opacity-80"
+          />
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             Give your workspace a collaborator
           </h2>
@@ -208,7 +240,11 @@ function SurfaceRow({
   visual: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col gap-10 md:flex-row md:items-center ${reverse ? "md:flex-row-reverse" : ""}`}>
+    <div
+      className={`flex flex-col gap-10 md:flex-row md:items-center ${
+        reverse ? "md:flex-row-reverse" : ""
+      }`}
+    >
       <div className="flex-1">
         <div className="flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
           {icon}
@@ -217,7 +253,10 @@ function SurfaceRow({
         <p className="mt-2 text-muted-foreground">{description}</p>
         <ul className="mt-5 space-y-2.5">
           {bullets.map((bullet) => (
-            <li key={bullet} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+            <li
+              key={bullet}
+              className="flex items-start gap-2.5 text-sm text-muted-foreground"
+            >
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
               {bullet}
             </li>
@@ -227,6 +266,16 @@ function SurfaceRow({
       {/* Mock UI screenshot stand-in — swap for a real per-surface screenshot once the app UI exists */}
       <div className="flex-1">{visual}</div>
     </div>
+  );
+}
+
+// Map-legend style eyebrow above a heading, matching the corner annotations.
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-4 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-primary/80">
+      <span className="size-1.5 rotate-45 border border-primary/70" />
+      {children}
+    </p>
   );
 }
 
@@ -241,8 +290,14 @@ function Step({
 }) {
   return (
     <div>
-      <span className="text-sm font-mono text-primary">{number}</span>
-      <h3 className="mt-3 font-medium">{title}</h3>
+      {/* Waypoint on a dashed trail, so the four steps read as one route */}
+      <div className="flex items-center gap-3">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-primary/60 font-mono text-[10px] text-primary">
+          {number}
+        </span>
+        <span className="h-px flex-1 border-t border-dashed border-white/15" />
+      </div>
+      <h3 className="mt-4 font-medium">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{children}</p>
     </div>
   );

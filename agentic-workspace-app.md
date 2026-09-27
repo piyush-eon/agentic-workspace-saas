@@ -19,14 +19,21 @@
 
 - **Mascot/logo**: a black robot-head icon with a winking circular "eye" (doubles as a subtle power/loading-ring motif) and a visor slit — friendly but techy, fits an "agent as collaborator" personality.
 - **Wordmark**: bold condensed "OUTPOST" lockup with the bot mascot perched on/integrated into the "P," tilted slightly for energy. Strong and distinctive at large sizes (hero/thumbnail).
-- **Asset generation**: source files (`outpost-bot.png`, `outpost-logo.png`, both flattened on white) were processed with a Pillow script (`scripts/generate-assets.py`) — keys out the white background to transparency, autocrops, generates square icon variants, inverted (white-on-transparent) dark-mode variants, and a dark-background OG/social image from the wordmark. Re-run with `python3 scripts/generate-assets.py` any time the source art changes.
+- **Asset generation**: source files (`outpost-bot.png`, `outpost-logo.png`, both flattened on white) were processed with a Pillow script (`scripts/generate-assets.py`) — keys out the white background to transparency, autocrops, generates square icon variants, inverted (white-on-transparent) dark-mode variants, and a dark-background OG/social image from the wordmark. That script was never committed to this repo, so regenerating assets means recreating it; the source art is kept in `assets/source/`.
 - **Known issue**: at true 16×16 favicon size, the mascot's antenna + lightning-bolt details compete with the eye/visor and the icon reads as noise, not a shape. Works fine from 32px up. Not yet fixed — would need a separate, more simplified crop (eye + visor only) specifically for the 16px favicon frame.
-- **Final asset layout in `public/`**:
+- **Visual identity (replaces the old film grain and glow blobs, which read as a generic AI-built site):**
+  - **Topographic contours** (`public/textures/topo.svg`) behind hero sections, applied with the `topo-bg` utility in `globals.css`. The SVG masks a color gradient, so lines glow amber at the center and cool to grey at the edges, then fade out softly. `MapAnnotations` adds printed-map corner labels (coordinates, elevation, a "You are here" marker, scale bar) on the landing hero and closing section (not the dashboard, which stays simpler), hidden on phones. Generated from a smooth random terrain with every 4th line thicker as an index contour, like a survey map. Ties to the name: an outpost is a base for mapping unknown territory. Never used over the doc or canvas editors.
+  - **Bricolage Grotesque** for headings (h1-h3, via `--font-heading`, with the optical-size axis); Geist stays for body text. Doc headings keep the editor's own font.
+  - The accent word in the landing headline is solid amber instead of gradient text.
+  - **Survey-map details on the landing page:** amber registration marks (`survey-frame` utility) around the product mockups and hero demo; numbered monospace section labels (`01 · Surfaces`, `02 · The route`, `03 · Field notes`) instead of generic badges and sparkle icons; the four "how it works" steps joined as waypoints on a dashed trail; a pulsing "You are here" marker; and the closing CTA back over the contours.
+- **Asset layout** (unused variants removed on 2026-09-27; git history has them):
   - `public/favicon.ico`, `public/icon.png`, `public/apple-icon.png` — kept at root; required there by Next.js App Router auto-detection, cannot be nested.
-  - `public/brand/` — `logo.png`, `logo-dark.png`, `logo-navbar.png`, `logo-navbar-dark.png`, `mascot.png`, `mascot-dark.png`
+  - `public/brand/` — `logo-navbar-dark.png` (site header), `mascot.png`, `mascot-dark.png`
   - `public/icons/` — `icon-192.png`, `icon-512.png` (referenced by `manifest.json` for PWA)
-  - `public/social/` — `og-image.png`, `twitter-image.png`
-  - `public/source/` — original flattened source PNGs, kept for regenerating assets later
+  - `public/social/og-image.png` — link preview image, wired into `openGraph` and `twitter` metadata in `app/layout.tsx`
+  - `public/textures/topo.svg` — contour background
+  - `public/videos/` — landing hero video (`hero.webm`, `hero.mp4` fallback, `hero-poster.jpg`), encoded from the original
+  - `assets/source/` (not deployed) — original brand artwork (`outpost-bot.png`, `outpost-logo.png`) and the original hero video `outpost.mp4`, which is gitignored because of its size
 - **Still to do**: simplified 16px-safe favicon crop; possibly a horizontal vs. stacked lockup variant for different UI placements (navbar vs. landing hero) if the current navbar crop doesn't work well in practice.
 
 ## Pages / Routes
@@ -35,7 +42,8 @@
 |---|---|
 | `/` | Landing page — hero, demo video, CTA |
 | `/sign-in`, `/sign-up` | Clerk auth |
-| `/dashboard` | Kanban board of the active org's workspaces (see "Workspace board"), "New" button |
+| `/dashboard` | Prompt hero (see "Dashboard prompt") plus the 4 most recently active workspaces, with links to the board and "New workspace" |
+| `/workspaces` | Kanban board of all the active org's workspaces (see "Workspace board") |
 | `/workspace/[id]` | Doc + canvas side by side, `?view=doc\|canvas` toggle, agent panel |
 | `/workspace/[id]/settings` | Rename, members, permissions, delete |
 | `/shared/[token]` | Public read-only view of the doc and canvas (see "Sharing & PDF Export") |
@@ -54,7 +62,7 @@
 - Agent streams shapes live from a prompt ("map out a marketing funnel")
 - Follow-up edits: agent reads current canvas state, diffs and edits existing shapes
 - Self-critique pass: second agent pass reviews its own diagram for overlap/missing links, auto-fixes
-- Voice-to-diagram via Gemini native audio input (no separate Whisper needed)
+- Voice input: a mic button (`components/MicButton.tsx`) on the dashboard prompt box and the agent chat panel. Uses the browser's built-in speech recognition to fill the text box with an editable transcript, so no backend and no Gemini quota. Works in Chrome, Edge and Safari; hidden in Firefox, which doesn't support it. Chosen over Gemini native audio so users can fix misheard words before the agent acts.
 - Templates: flowchart, architecture, ERD, user journey, org chart
 - **Live "agent cursor"** (see dedicated section below) — the standout feature
 
@@ -64,8 +72,12 @@
 - Agent can pull content from a canvas into a doc ("write up this diagram as a spec")
 - Uses BlockNote's AI features wired to our own Gemini calls via Vercel AI SDK (consistent with how the canvas is driven), rather than any hosted AI backend
 
+### Dashboard prompt
+- A prompt box above the board ("What do you want to plan?"), with the mic button. Submitting creates a workspace in the active org (name taken from the prompt's first words, the full prompt as its description) and opens it at `/workspace/<id>?prompt=...`.
+- The workspace opens with the agent panel open and sends the prompt as the first message once both the doc and canvas editors are ready, then removes `prompt` from the URL so a refresh doesn't resend it. The "New workspace" button still creates a blank workspace.
+
 ### Workspace board (replaces the cut tasks surface)
-- The dashboard shows the active org's workspaces as cards on a kanban board with fixed columns: Planning → In progress → In review → Done. Cards are a fixed, compact height and show the name plus an optional description (entered in the new-workspace dialog).
+- The board lives on its own page, `/workspaces` (linked from the dashboard's "View board" and the site header), so it gets the full page instead of sitting below the dashboard's prompt hero. It shows the active org's workspaces as cards on a kanban board with fixed columns: Planning → In progress → In review → Done. Cards are a fixed, compact height and show the name plus an optional description (entered in the new-workspace dialog).
 - Drag and drop moves a card between columns and reorders it within a column.
 - Schema: `Workspace.status` (enum `WorkspaceStatus`: PLANNING, IN_PROGRESS, IN_REVIEW, DONE, default PLANNING), `Workspace.description` (optional) and `Workspace.position` (Float, default 0; a dropped card takes a value between its neighbors, so only the moved card is updated).
 - Not live: other members see moves after a refresh.
@@ -115,7 +127,7 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 | Auth | Clerk (sponsor) |
 | DB | Supabase (sponsor) — Postgres + Prisma ORM (via `@prisma/adapter-pg`) |
 | File/asset storage | Supabase Storage |
-| AI (agent, voice, critique) | Gemini via Vercel AI SDK (`@ai-sdk/google`) — single provider for drawing agent, follow-up edits, self-critique, and voice-to-diagram (Gemini has native audio input, no separate Whisper needed) |
+| AI (agent, critique) | Gemini via Vercel AI SDK (`@ai-sdk/google`) — single provider for the agent, follow-up edits and self-critique. Voice input uses the browser's speech recognition instead (see Canvas surface). |
 | Payments | Clerk Billing |
 | Styling | Tailwind + shadcn/ui |
 | Forms | Plain controlled inputs + Server Actions by default; React Hook Form + Zod only if a form grows complex enough to need it (e.g. workspace settings, billing upgrade flow) — not a default dependency |
@@ -243,4 +255,4 @@ Fine-grained primitives, not coarse composite tools — one tool per tldraw shap
 
 - Chapter-by-chapter video outline / script — not yet created.
 - Final title/thumbnail line — leaning toward "Agentic Workspace App" but not locked.
-- Landing page copy still promises features that aren't built: the self-critique pass, canvas templates and voice input. Agent cursor wording was removed; the hero demo's animated cursor visual stays on purpose.
+- Landing page copy still promises features that aren't built: the self-critique pass and canvas templates. Agent cursor wording was removed; the hero demo's animated cursor visual stays on purpose.

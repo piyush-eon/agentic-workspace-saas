@@ -82,8 +82,10 @@ export function BoardMock() {
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="aspect-4/3 overflow-hidden rounded-2xl border border-white/10 bg-card/40 shadow-xl shadow-black/30">
-      {children}
+    <div className="survey-frame">
+      <div className="aspect-4/3 overflow-hidden rounded-2xl border border-white/10 bg-card/40 shadow-xl shadow-black/30">
+        {children}
+      </div>
     </div>
   );
 }

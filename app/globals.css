@@ -10,7 +10,7 @@
   /* Bind Tailwind's font-sans to the Geist variable next/font actually injects */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -99,22 +99,92 @@
   html {
     @apply font-sans;
   }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+
+  /* Doc headings belong to the document, so they keep the editor's own font. */
+  .bn-container :is(h1, h2, h3) {
+    font-family: inherit;
+  }
 }
 
-/* App-wide film-grain overlay. `overlay` blend mode barely shows up against our near-black
-   background, so this uses `screen` (which only ever lightens) at a higher opacity instead.
-   position: absolute (not fixed) so it scrolls with the page instead of staying pinned to
-   the viewport — html/body need position: relative for this to anchor to full document height.
-   z-30 sits above the fixed header (z-20, translucent) so the grain reads through it too,
-   but stays below interactive overlays (dialog/sheet/dropdown/tooltip, all z-50). */
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  opacity: 0.18;
-  mix-blend-mode: screen;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  background-repeat: repeat;
+/* Topographic contours (public/textures/topo.svg): Outpost's background identity, a nod to
+   mapping unknown territory. Opt-in per section, never over the doc or canvas editors.
+   The SVG is used as a mask over a color gradient, so lines glow amber at the center and cool to grey
+   at the edges; a second mask layer fades the whole map out softly. */
+@utility topo-bg {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 40% 50% at 50% 42%,
+        oklch(0.78 0.16 60),
+        oklch(0.74 0.16 55 / 0.55) 45%,
+        oklch(1 0 0 / 0.45) 75%);
+    mask-image:
+      url("/textures/topo.svg"),
+      radial-gradient(ellipse 75% 70% at 50% 45%, black 30%, transparent 85%);
+    mask-size: cover, 100% 100%;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-composite: intersect;
+    opacity: 0.55;
+  }
+}
+
+/* Registration marks: small amber corner ticks just outside an element, like the crop marks on a
+   printed map sheet. Put it on a wrapper, since an overflow-hidden element would clip them. */
+@utility survey-frame {
+  position: relative;
+
+  &::after {
+    --mark: oklch(0.74 0.16 55 / 0.7);
+    --size: 14px;
+    content: "";
+    position: absolute;
+    inset: -8px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--mark), var(--mark)) top left / var(--size) 1px,
+      linear-gradient(var(--mark), var(--mark)) top left / 1px var(--size),
+      linear-gradient(var(--mark), var(--mark)) top right / var(--size) 1px,
+      linear-gradient(var(--mark), var(--mark)) top right / 1px var(--size),
+      linear-gradient(var(--mark), var(--mark)) bottom left / var(--size) 1px,
+      linear-gradient(var(--mark), var(--mark)) bottom left / 1px var(--size),
+      linear-gradient(var(--mark), var(--mark)) bottom right / var(--size) 1px,
+      linear-gradient(var(--mark), var(--mark)) bottom right / 1px var(--size);
+    background-repeat: no-repeat;
+  }
+}
+
+/* Scroll-linked tilt: starts leaning back from the top, shifted up to close the gap the tilt
+   opens above it, and settles flat into its normal position over the first 500px of scroll. Pure CSS (scroll-driven animations); browsers without support, and anyone who
+   prefers reduced motion, just see it flat. */
+@keyframes scroll-tilt {
+  from {
+    transform: perspective(1400px) translateY(-70px) rotateX(22deg) scale(0.96);
+  }
+
+  to {
+    transform: perspective(1400px) translateY(0) rotateX(0deg) scale(1);
+  }
+}
+
+@utility scroll-tilt {
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: scroll-tilt linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 500px;
+    }
+  }
 }

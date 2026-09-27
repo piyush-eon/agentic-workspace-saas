@@ -6,6 +6,7 @@ import { Send, Square, Wand2 } from "lucide-react";
 import { isToolUIPart, isDynamicToolUIPart } from "ai";
 import type { WorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 import { Button } from "@/components/ui/button";
+import { MicButton } from "@/components/MicButton";
 
 const DEFAULT_WIDTH = 360;
 const MIN_WIDTH = 280;
@@ -158,6 +159,7 @@ export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; is
           disabled={!isReady}
           className="max-h-32 flex-1 resize-none rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-ring disabled:opacity-50"
         />
+        <MicButton value={input} onChange={setInput} disabled={!isReady} />
         {isBusy ? (
           <Button size="icon" variant="secondary" onClick={stop}>
             <Square className="size-3.5" />

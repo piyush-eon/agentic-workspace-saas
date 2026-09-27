@@ -45,3 +45,6 @@ next-env.d.ts
 
 # supabase cli local state
 supabase/.temp/
+
+# original video source (too large for git; encoded copies live in public/videos)
+/assets/source/*.mp4

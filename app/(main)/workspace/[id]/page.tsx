@@ -29,7 +29,8 @@ export default async function WorkspacePage({
   searchParams,
 }: PageProps<"/workspace/[id]">) {
   const { id } = await params;
-  const view = parseViewMode((await searchParams).view);
+  const { view: viewParam, prompt } = await searchParams;
+  const view = parseViewMode(viewParam);
 
   // 404 rather than 403 so outsiders can't tell whether a workspace id exists.
   if (!(await canAccessWorkspace(id))) notFound();
@@ -91,7 +92,7 @@ export default async function WorkspacePage({
 
           <div className="flex flex-1 items-center justify-end gap-2">
             <ShareDialog workspaceId={id} workspaceName={workspace.name} initialShareToken={workspace.shareToken} />
-            <AgentToggleButton />
+            <AgentToggleButton initialPrompt={typeof prompt === "string" ? prompt : undefined} />
           </div>
         </header>
 

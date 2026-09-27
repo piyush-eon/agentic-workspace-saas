@@ -2,15 +2,15 @@
 // the app's actual tokens from globals.css so the doc panel matches the rest of the UI exactly.
 export const outpostDarkTheme = {
   colors: {
-    editor: { text: "oklch(0.97 0.002 285)", background: "oklch(0.13 0.004 285)" },
-    menu: { text: "oklch(0.97 0.002 285)", background: "oklch(0.17 0.005 285)" },
-    tooltip: { text: "oklch(0.97 0.002 285)", background: "oklch(0.17 0.005 285)" },
-    hovered: { text: "oklch(0.97 0.002 285)", background: "oklch(0.22 0.006 285)" },
-    selected: { text: "oklch(0.93 0.03 60)", background: "oklch(0.27 0.02 55)" },
-    disabled: { text: "oklch(0.64 0.01 285)", background: "oklch(0.22 0.006 285)" },
+    editor: { text: "oklch(0.98 0 0)", background: "oklch(0.12 0 0)" },
+    menu: { text: "oklch(0.98 0 0)", background: "oklch(0.17 0 0)" },
+    tooltip: { text: "oklch(0.98 0 0)", background: "oklch(0.17 0 0)" },
+    hovered: { text: "oklch(0.98 0 0)", background: "oklch(0.24 0 0)" },
+    selected: { text: "oklch(0.98 0 0)", background: "oklch(0.32 0 0)" },
+    disabled: { text: "oklch(0.72 0 0)", background: "oklch(0.24 0 0)" },
     shadow: "oklch(0 0 0 / 30%)",
     border: "oklch(1 0 0 / 10%)",
-    sideMenu: "oklch(0.64 0.01 285)",
+    sideMenu: "oklch(0.72 0 0)",
     highlights: {},
   },
   borderRadius: 8,

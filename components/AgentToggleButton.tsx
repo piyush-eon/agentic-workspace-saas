@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgentChatPanel } from "@/components/AgentChatPanel";
@@ -12,10 +13,22 @@ import { useWorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 // page.tsx is a server component, so this is the button plus the panel it toggles. The chat
 // itself is created here (not inside AgentChatPanel) and kept mounted even while closed, so
 // closing/reopening the panel doesn't wipe the conversation.
-export function AgentToggleButton() {
-  const [isOpen, setIsOpen] = useState(false);
+export function AgentToggleButton({ initialPrompt }: { initialPrompt?: string }) {
+  const [isOpen, setIsOpen] = useState(!!initialPrompt);
   const { canvasEditor, docEditor } = useWorkspaceEditors();
   const chat = useWorkspaceAgentChat({ canvasEditor, docEditor });
+  const router = useRouter();
+  const pathname = usePathname();
+  const promptSent = useRef(false);
+
+  // A prompt from the dashboard is sent once both editors are ready, so the agent sees both
+  // surfaces. It's then dropped from the URL so a refresh doesn't send it again.
+  useEffect(() => {
+    if (!initialPrompt || promptSent.current || !canvasEditor || !docEditor) return;
+    promptSent.current = true;
+    chat.sendMessage({ text: initialPrompt });
+    router.replace(pathname, { scroll: false });
+  }, [initialPrompt, canvasEditor, docEditor, chat, router, pathname]);
 
   return (
     <>
