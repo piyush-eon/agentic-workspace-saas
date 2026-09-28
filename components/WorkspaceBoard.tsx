@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
@@ -10,6 +9,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import type { WorkspaceStatus } from "@/lib/generated/prisma/enums";
 import { WORKSPACE_STATUSES } from "@/lib/workspace-status";
 import { WorkspaceDialog } from "@/components/WorkspaceDialog";
+import { WorkspaceCard, type WorkspaceCardData } from "@/components/WorkspaceCard";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,13 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type BoardWorkspace = {
-  id: string;
-  name: string;
-  description: string | null;
-  status: WorkspaceStatus;
-  position: number;
-};
+type BoardWorkspace = WorkspaceCardData & { position: number };
 
 function columnItems(workspaces: BoardWorkspace[], status: WorkspaceStatus) {
   return workspaces.filter((w) => w.status === status).sort((a, b) => a.position - b.position);
@@ -101,65 +95,52 @@ export function WorkspaceBoard({ workspaces }: { workspaces: BoardWorkspace[] })
         {WORKSPACE_STATUSES.map((column) => {
           const columnWorkspaces = columnItems(items, column.status);
           return (
-            <div key={column.status} className="flex flex-col rounded-xl border border-white/8 bg-white/2">
-              <div className="flex items-center gap-2 px-4 pt-4 pb-2 text-sm font-medium">
+            <div key={column.status} className="flex flex-col rounded-lg bg-white/3">
+              <div className="flex items-center gap-2 px-3 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 {column.title}
-                <span className="text-xs text-muted-foreground">{columnWorkspaces.length}</span>
+                <span className="font-normal">{columnWorkspaces.length}</span>
               </div>
               <Droppable droppableId={column.status}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex min-h-40 flex-1 flex-col gap-2 rounded-b-xl p-3 transition-colors ${
+                    className={`flex min-h-40 flex-1 flex-col gap-1.5 rounded-b-lg p-2 transition-colors ${
                       snapshot.isDraggingOver ? "bg-primary/5" : ""
                     }`}
                   >
                     {columnWorkspaces.map((workspace, index) => (
                       <Draggable key={workspace.id} draggableId={workspace.id} index={index}>
                         {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`group relative flex h-32 flex-col gap-1.5 rounded-lg border bg-card p-4 transition-colors hover:border-primary/50 ${
-                              snapshot.isDragging ? "border-primary/50 shadow-lg shadow-black/40" : "border-white/10"
-                            }`}
-                          >
-                            {/* after:inset-0 stretches the link over the whole card, so the menu
-                                button can sit on top without being nested inside the link. */}
-                            <Link
-                              href={`/workspace/${workspace.id}`}
-                              draggable={false}
-                              className="pr-8 text-sm font-medium after:absolute after:inset-0"
-                            >
-                              {workspace.name}
-                            </Link>
-                            <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-                              {workspace.description || "No description"}
-                            </p>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label="Workspace options"
-                                  className="absolute top-2 right-2 size-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
-                                >
-                                  <MoreHorizontal className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => openFor(workspace, "edit")}>
-                                  <Pencil className="size-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem variant="destructive" onSelect={() => openFor(workspace, "delete")}>
-                                  <Trash2 className="size-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <WorkspaceCard
+                              workspace={workspace}
+                              highlighted={snapshot.isDragging}
+                              actions={
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label="Workspace options"
+                                      className="absolute top-2 right-2 size-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                                    >
+                                      <MoreHorizontal className="size-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => openFor(workspace, "edit")}>
+                                      <Pencil className="size-4" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem variant="destructive" onSelect={() => openFor(workspace, "delete")}>
+                                      <Trash2 className="size-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              }
+                            />
                           </div>
                         )}
                       </Draggable>

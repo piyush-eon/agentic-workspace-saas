@@ -108,7 +108,7 @@ export default function Home() {
               bullets={[
                 "Templates for flowcharts, ERDs, architecture, and org charts",
                 "Follow-up edits: ask for changes and it edits shapes in place",
-                "A self-critique pass catches overlaps and missing links",
+                "ERD tables with typed columns and key badges",
               ]}
               visual={<CanvasMock />}
             />
@@ -118,7 +118,7 @@ export default function Home() {
               title="Docs"
               description="Turn any diagram into a written spec. The agent drafts, rewrites, and summarizes in a block-based editor, pulling structure straight from what's on the canvas."
               bullets={[
-                "Block-based editor: headings, lists, quotes, callouts",
+                "Block-based editor: headings, lists, checklists, tables, code",
                 '"Write this diagram up as a spec" pulls structure automatically',
                 "Rewrite or summarize any section on command",
               ]}
@@ -150,7 +150,7 @@ export default function Home() {
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             Watch it think, not just the result
           </h2>
-          <div className="mt-12 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-10 md:grid-cols-3">
             <Step number="01" title="Describe what you need">
               Just say &ldquo;Map out our onboarding flow.&rdquo; Plain
               language, no diagramming syntax to learn. Or just talk: voice
@@ -160,11 +160,7 @@ export default function Home() {
               Shapes appear one by one as the agent works, the same way a
               teammate would draw over a call.
             </Step>
-            <Step number="03" title="It checks its own work">
-              A second pass reviews the diagram for overlaps or missing links
-              and fixes them automatically.
-            </Step>
-            <Step number="04" title="Keep iterating together">
+            <Step number="03" title="Keep iterating together">
               Ask for changes, pull it into a doc, or bring in your team. Same
               agent, same context.
             </Step>

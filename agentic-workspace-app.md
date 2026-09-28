@@ -61,7 +61,7 @@
 - Infinite canvas (tldraw), shapes/text/arrows/freehand
 - Agent streams shapes live from a prompt ("map out a marketing funnel")
 - Follow-up edits: agent reads current canvas state, diffs and edits existing shapes
-- Self-critique pass: second agent pass reviews its own diagram for overlap/missing links, auto-fixes
+- ~~Self-critique pass~~: **cut** (2026-09-28). Diagram layout quality relies on the agent's layout rules instead.
 - Voice input: a mic button (`components/MicButton.tsx`) on the dashboard prompt box and the agent chat panel. Uses the browser's built-in speech recognition to fill the text box with an editable transcript, so no backend and no Gemini quota. Works in Chrome, Edge and Safari; hidden in Firefox, which doesn't support it. Chosen over Gemini native audio so users can fix misheard words before the agent acts.
 - Templates: flowchart, architecture, ERD, user journey, org chart
 - **Live "agent cursor"** (see dedicated section below) — the standout feature
@@ -88,7 +88,8 @@
 - Real-time multiplayer cursors/presence (tldraw sync for canvas; Supabase Realtime for docs)
 - Access: any member of a workspace's Clerk org can open it anytime; no per-workspace member lists
 - Invite by email/link, roles (viewer/editor)
-- Comments/pins
+- ~~Comments/pins~~: **cut** (2026-09-28).
+- Doc callouts: **cut** (2026-09-28). BlockNote's default blocks have no callout, so the landing page lists headings, lists, checklists, tables and code instead.
 
 ### Account / SaaS layer
 - Clerk auth, org support for team workspaces
@@ -127,7 +128,7 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 | Auth | Clerk (sponsor) |
 | DB | Supabase (sponsor) — Postgres + Prisma ORM (via `@prisma/adapter-pg`) |
 | File/asset storage | Supabase Storage |
-| AI (agent, critique) | Gemini via Vercel AI SDK (`@ai-sdk/google`) — single provider for the agent, follow-up edits and self-critique. Voice input uses the browser's speech recognition instead (see Canvas surface). |
+| AI (agent) | Gemini via Vercel AI SDK (`@ai-sdk/google`) — single provider for the agent and its follow-up edits. Voice input uses the browser's speech recognition instead (see Canvas surface). |
 | Payments | Clerk Billing |
 | Styling | Tailwind + shadcn/ui |
 | Forms | Plain controlled inputs + Server Actions by default; React Hook Form + Zod only if a form grows complex enough to need it (e.g. workspace settings, billing upgrade flow) — not a default dependency |
@@ -295,10 +296,10 @@ Fine-grained primitives, not coarse composite tools — one tool per tldraw shap
 
 **Choosing the surface:** if the user names one ("in the doc", "just the diagram"), only that one changes. Otherwise the agent decides from the request (visual structure on the canvas, prose in the doc, both when needed) and can convert between them ("write up this diagram as a spec", "draw what the doc describes"). This cross-surface editing is what earns the "workspace" naming.
 
-**Follow-up edits and the self-critique pass are not separate tools**: both reuse the same tools with the current state as context (self-critique would be a second pass with a "review for overlaps/missing connections" prompt; not built yet).
+**Follow-up edits are not separate tools**: they reuse the same tools with the current state as context. (A self-critique pass was planned the same way, as a second "review for overlaps" prompt, but was cut on 2026-09-28.)
 
 ## Open / Next Steps (not yet decided)
 
 - Chapter-by-chapter video outline / script — not yet created.
 - Final title/thumbnail line — leaning toward "Agentic Workspace App" but not locked.
-- Landing page copy still promises features that aren't built: the self-critique pass and canvas templates. Agent cursor wording was removed; the hero demo's animated cursor visual stays on purpose.
+- Landing page copy still promises one feature that isn't built: canvas templates. The self-critique pass, comments/pins and doc callouts were cut on 2026-09-28 and removed from the copy; agent cursor wording was removed earlier (the hero's cursor visual was replaced by the walkthrough video).

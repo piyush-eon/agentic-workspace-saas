@@ -3,6 +3,7 @@ import { KanbanSquare, Plus } from "lucide-react";
 import { checkUser } from "@/actions/check-user";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceScope } from "@/lib/workspace-scope";
+import { lastActivityAt, workspaceCardSelect } from "@/lib/workspace-status";
 import { Button } from "@/components/ui/button";
 import { WorkspaceDialog } from "@/components/WorkspaceDialog";
 import { RecentWorkspaces } from "@/components/RecentWorkspaces";
@@ -17,32 +18,9 @@ export default async function DashboardPage() {
   }
 
   const { orgName, where } = await getWorkspaceScope(user.id);
-  const workspaces = await prisma.workspace.findMany({
-    where,
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      status: true,
-      updatedAt: true,
-      doc: { select: { updatedAt: true } },
-      canvas: { select: { updatedAt: true } },
-    },
-  });
-
-  // A workspace's own updatedAt only changes on rename/move, so recency also counts doc and
-  // canvas edits.
+  const workspaces = await prisma.workspace.findMany({ where, select: workspaceCardSelect });
   const recent = workspaces
-    .map((w) => ({
-      ...w,
-      lastActivity: new Date(
-        Math.max(
-          w.updatedAt.getTime(),
-          w.doc?.updatedAt.getTime() ?? 0,
-          w.canvas?.updatedAt.getTime() ?? 0
-        )
-      ),
-    }))
+    .map((w) => ({ ...w, lastActivity: lastActivityAt(w) }))
     .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime())
     .slice(0, RECENT_COUNT);
 
