@@ -10,11 +10,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Plan {
-  FREE
-  PRO
-}
-
 enum WorkspaceStatus {
   PLANNING
   IN_PROGRESS
@@ -28,7 +23,6 @@ model User {
   email     String   @unique
   name      String?
   imageUrl  String?
-  plan      Plan     @default(FREE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

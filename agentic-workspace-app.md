@@ -45,7 +45,6 @@
 | `/dashboard` | Prompt hero (see "Dashboard prompt") plus the 4 most recently active workspaces, with links to the board and "New workspace" |
 | `/workspaces` | Kanban board of all the active org's workspaces (see "Workspace board") |
 | `/workspace/[id]` | Doc + canvas side by side, `?view=doc\|canvas` toggle, agent panel |
-| `/workspace/[id]/settings` | Rename, members, permissions, delete |
 | `/shared/[token]` | Public read-only view of the doc and canvas (see "Sharing & PDF Export") |
 | `/pricing` | Free vs Pro (agent usage limits) |
 | `/api/*` | Route handlers (agent runs, CRUD, webhooks) |
@@ -131,7 +130,7 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 | AI (agent) | Gemini via Vercel AI SDK (`@ai-sdk/google`) — single provider for the agent and its follow-up edits. Voice input uses the browser's speech recognition instead (see Canvas surface). |
 | Payments | Clerk Billing |
 | Styling | Tailwind + shadcn/ui |
-| Forms | Plain controlled inputs + Server Actions by default; React Hook Form + Zod only if a form grows complex enough to need it (e.g. workspace settings, billing upgrade flow) — not a default dependency |
+| Forms | Plain controlled inputs + Server Actions by default; React Hook Form + Zod only if a form grows complex enough to need it (e.g. a billing upgrade flow) — not a default dependency |
 | Deployment | Vercel |
 
 ## tldraw Licensing Notes
@@ -169,12 +168,11 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 - `CheckoutButton`, `usePlans` and `useSubscription` come from `@clerk/nextjs/experimental` (Billing is in public beta), so `@clerk/nextjs` and `@clerk/ui` are pinned to exact versions.
 - **Entitlements** (`lib/billing.ts`): every check uses the **workspace owner's** plan (its Clerk org, or its creator for personal workspaces), looked up on the server with Clerk's backend billing API (`getOrganizationBillingSubscription` / `getUserBillingSubscription`). So it works for any workspace regardless of the org selected in the switcher, and for signed-out viewers of shared links. `past_due` keeps access; no subscription or an unreachable Clerk means the free plan.
 - **Limits** (numbers and upgrade messages in `lib/plan-limits.ts`):
-  - **Agent prompts:** 20/month free; `agent_prompts_500` / `agent_prompts_2000` per member (pooled) on paid plans. Every prompt a user sends (not tool follow-ups) is recorded in `AgentPrompt` per owner and counted per calendar month (UTC); rows survive workspace deletion. `/api/agent` checks the limit **before** calling Gemini and returns HTTP 402 `prompt_limit_reached`; the chat opens the upgrade dialog and shows an inline note.
+  - **Agent prompts:** 20/month free; `agent_prompts_500` / `agent_prompts_2000` per member (pooled) on paid plans. Every prompt a user sends (not tool follow-ups) is recorded in `AgentPrompt` per owner once Gemini finishes answering (a failed request, e.g. Gemini high demand, costs nothing) and counted per calendar month (UTC); rows survive workspace deletion. `/api/agent` checks the limit **before** calling Gemini and returns HTTP 402 `prompt_limit_reached`; the chat opens the upgrade dialog and shows an inline note.
   - **Workspaces:** 3 per owner without `unlimited_workspaces`, checked in `createWorkspace`.
   - **Public links:** need `public_sharing`, checked when turning sharing on and when a shared page is opened (links stop working after a downgrade).
   - **PDF export:** needs `pdf_export`; the workspace page passes the flag to the Share dialog (export runs in the browser, so this is a UI lock).
   - Limit results are returned from server actions, not thrown, since Next hides thrown messages in production. Each opens the upgrade dialog with its reason.
-- **Not done yet:** removing the unused `User.plan` column.
 
 ## Sharing & PDF Export
 
@@ -218,7 +216,7 @@ No member or role tables: org membership and roles live in Clerk Organizations. 
 
 | Model | Key fields | Notes |
 |---|---|---|
-| `User` | `clerkId` (unique), `email` (unique), `name`, `imageUrl`, `plan` | Local mirror of the Clerk user, created by `checkUser`. **`plan` (enum `Plan`: FREE, PRO) is legacy and unused**, since plans come from Clerk; to be removed. |
+| `User` | `clerkId` (unique), `email` (unique), `name`, `imageUrl` | Local mirror of the Clerk user, created by `checkUser`. No plan field: plans come from Clerk. |
 | `Workspace` | `name`, `description`, `creatorId` → User, `clerkOrgId` (null = personal), `status` (enum `WorkspaceStatus`), `position` (Float), `shareToken` (unique, null = sharing off) | Indexed on `creatorId` and `clerkOrgId`. `status` + `position` place it on the board. |
 | `Doc` | `workspaceId` (unique), `yjsState` (Bytes), `content` (JSON) | 1:1 with Workspace. `yjsState` is the real-time collaboration source of truth; `content` is a readable JSON copy for server-side use (shared page). |
 | `Canvas` | `workspaceId` (unique), `content` (JSON) | 1:1 with Workspace. Last saved tldraw snapshot: the backup that re-seeds an empty sync room and feeds the shared page. |
@@ -235,6 +233,7 @@ No member or role tables: org membership and roles live in Clerk Organizations. 
 6. `doc_yjs_state`: `Doc.yjsState` for real-time doc collaboration.
 7. `workspace_share_token`: `Workspace.shareToken` for public links.
 8. `agent_prompt_usage`: replaced the never-used `AgentActionLog` (one row per tool call) with `AgentPrompt` (one row per prompt).
+9. `drop_user_plan`: removed the unused `User.plan` column and `Plan` enum.
 
 **Workflow note:** when `prisma migrate dev` can't run (non-interactive environments, or warnings it wants confirmed), the migration SQL is generated with `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`, reviewed, saved as a new migration folder, and applied with `prisma migrate deploy`; a second `migrate diff` should then print an empty migration. After any schema change, run `prisma generate` and restart the dev server.
 
@@ -242,7 +241,7 @@ No member or role tables: org membership and roles live in Clerk Organizations. 
 
 The reference repo uses zero client-side fetching libraries: Server Components for reads, Server Actions + `revalidatePath`/`router.refresh()` for writes. Decided to follow the same pattern for Outpost rather than introduce TanStack Query.
 
-Where it might have seemed tempting — the canvas surface's live agent state (tool-call progress, streaming status, presence) — isn't actually a "fetch and cache" problem, it's a subscribe-to-a-stream problem, which the Vercel AI SDK's own streaming hooks and tldraw sync's presence system already handle natively. Adding TanStack Query on top would be a second, redundant state-management paradigm for something already covered. Server Actions remain the default everywhere else (dashboard, settings, docs CRUD).
+Where it might have seemed tempting — the canvas surface's live agent state (tool-call progress, streaming status, presence) — isn't actually a "fetch and cache" problem, it's a subscribe-to-a-stream problem, which the Vercel AI SDK's own streaming hooks and tldraw sync's presence system already handle natively. Adding TanStack Query on top would be a second, redundant state-management paradigm for something already covered. Server Actions remain the default everywhere else (dashboard, board, docs CRUD).
 
 ### `useFetch` — standard client-side wrapper for mutation Server Actions
 

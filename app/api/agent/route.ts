@@ -56,16 +56,16 @@ export async function POST(req: Request) {
 
   // Only a message the user typed counts as a prompt; the automatic follow-ups after tool calls
   // end with the agent's own message, so a prompt that draws 20 shapes still counts once.
+  let ownerId: string | null = null;
   if (messages.at(-1)?.role === "user") {
     const workspace = await prisma.workspace.findUniqueOrThrow({
       where: { id: workspaceId },
       select: { clerkOrgId: true, creator: { select: { clerkId: true } } },
     });
-    const ownerId = workspaceOwnerId(workspace);
+    ownerId = workspaceOwnerId(workspace);
     const { used, limit } = await getPromptUsage(ownerId);
     // Checked before calling Gemini, so an exhausted plan costs nothing.
     if (used >= limit) return Response.json({ error: PROMPT_LIMIT_ERROR, used, limit }, { status: 402 });
-    await recordPrompt(ownerId, user.id, workspaceId);
   }
 
   const result = streamText({
@@ -77,6 +77,10 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     providerOptions: {
       google: { thinkingConfig: { includeThoughts: true } },
+    },
+    // Charged only once Gemini answers, so a failed request (e.g. high demand) costs nothing.
+    onFinish: async () => {
+      if (ownerId) await recordPrompt(ownerId, user.id, workspaceId);
     },
   });
 
