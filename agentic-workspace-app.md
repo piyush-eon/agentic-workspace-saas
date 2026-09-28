@@ -25,7 +25,7 @@
   - **Topographic contours** (`public/textures/topo.svg`) behind hero sections, applied with the `topo-bg` utility in `globals.css`. The SVG masks a color gradient, so lines glow amber at the center and cool to grey at the edges, then fade out softly. `MapAnnotations` adds printed-map corner labels (coordinates, elevation, a "You are here" marker, scale bar) on the landing hero and closing section (not the dashboard, which stays simpler), hidden on phones. Generated from a smooth random terrain with every 4th line thicker as an index contour, like a survey map. Ties to the name: an outpost is a base for mapping unknown territory. Never used over the doc or canvas editors.
   - **Bricolage Grotesque** for headings (h1-h3, via `--font-heading`, with the optical-size axis); Geist stays for body text. Doc headings keep the editor's own font.
   - The accent word in the landing headline is solid amber instead of gradient text.
-  - **Survey-map details on the landing page:** amber registration marks (`survey-frame` utility) around the product mockups and hero demo; numbered monospace section labels (`01 · Surfaces`, `02 · The route`, `03 · Field notes`) instead of generic badges and sparkle icons; the four "how it works" steps joined as waypoints on a dashed trail; a pulsing "You are here" marker; and the closing CTA back over the contours.
+  - **Survey-map details on the landing page:** amber registration marks (`survey-frame` utility) around the product mockups and hero demo; numbered monospace section labels (`01 · Surfaces`, `02 · The route`, `03 · Pricing`; the testimonial section was removed) instead of generic badges and sparkle icons; the four "how it works" steps joined as waypoints on a dashed trail; a pulsing "You are here" marker; and the closing CTA back over the contours.
 - **Asset layout** (unused variants removed on 2026-09-27; git history has them):
   - `public/favicon.ico`, `public/icon.png`, `public/apple-icon.png` — kept at root; required there by Next.js App Router auto-detection, cannot be nested.
   - `public/brand/` — `logo-navbar-dark.png` (site header), `mascot.png`, `mascot-dark.png`
@@ -154,6 +154,27 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
   - tldraw documents it as prototyping-only, with no uptime guarantees.
 - **Tell viewers:** for a real product, deploy your own sync server with tldraw's Cloudflare template (`npm create tldraw@latest -- --template sync-cloudflare`), register the custom `entity-table` shape on it, check Clerk org membership before a client joins a room, then swap `useSyncDemo` for `useSync({ uri })` in `components/CanvasEditor.tsx`. Once the server stores the canvas, the Postgres canvas autosave can be removed.
 
+## Billing (Clerk Billing)
+
+- **Plans** (set up in the Clerk dashboard, monthly only, no annual):
+  - Users: default **Free**, and **Pro** (key `pro`), $12/month.
+  - Organizations: default **Free**, **Team** (key `team`), seat-based at $12 per member per month, no base fee, unlimited members; and **Enterprise** (key `enterprise`), seat-based at $25 per member per month with higher limits (`agent_prompts_2000`) plus everything in Team.
+  - **Gating features** (checked by code; never attach to a Free plan): `unlimited_workspaces`, `public_sharing`, `pdf_export`, and the prompt allowances `agent_prompts_500` (Pro, Team; display name "500 agent prompts per seat / month") and `agent_prompts_2000` (Enterprise; "2,000 agent prompts per seat / month").
+  - **Display-only features** (shown on pricing cards, ignored by code; limits are enforced in `lib/plan-limits.ts`): `agent_prompts_20` ("20 agent prompts per month") and `workspaces_3` ("Up to 3 workspaces") on both Free plans; `live_collaboration` ("Live collaboration on docs and canvas") and `voice_input` ("Voice input") on every plan, Free and paid.
+  - Development uses the Clerk development gateway (test payments); connect a real Stripe account before going live.
+- **Shared pricing component** (`components/PricingPlans.tsx`), used in three places with an optional title and message: the `/pricing` page, the landing page's pricing section (`#pricing`), and the **upgrade dialog** (`components/UpgradeDialog.tsx`), which any code can open with a reason via `useUpgradeDialog()`, e.g. `openUpgrade({ title: "You're out of agent prompts" })`. The dialog closes itself when checkout starts, since it would otherwise block Clerk's checkout drawer.
+- **Header plan button** (`components/PlanButton.tsx`): inside the app it replaces the Dashboard/Workspaces links. On a free plan it shows **Upgrade** (opens the dialog); on a paid plan it shows the plan's name and opens Clerk's subscription details (only for members who can manage billing). It follows the personal account or the org selected in the switcher and shows the prompts left this month (e.g. `18 left`) with a small progress ring, full detail in the tooltip; free plans open the upgrade dialog on click, paid plans open subscription details.
+- **Pricing card details:** custom cards that load plans, prices and features from Clerk via `usePlans`, with Personal / Team tabs (defaulting to the current context). Paid cards open Clerk's checkout drawer with `CheckoutButton` (`planPeriod="month"`); Team checkout charges the **active organization**, shows "Upgrading <org>", and only members with `org:sys_billing:manage` (admins) can buy. `useSubscription` marks the current plan.
+- `CheckoutButton`, `usePlans` and `useSubscription` come from `@clerk/nextjs/experimental` (Billing is in public beta), so `@clerk/nextjs` and `@clerk/ui` are pinned to exact versions.
+- **Entitlements** (`lib/billing.ts`): every check uses the **workspace owner's** plan (its Clerk org, or its creator for personal workspaces), looked up on the server with Clerk's backend billing API (`getOrganizationBillingSubscription` / `getUserBillingSubscription`). So it works for any workspace regardless of the org selected in the switcher, and for signed-out viewers of shared links. `past_due` keeps access; no subscription or an unreachable Clerk means the free plan.
+- **Limits** (numbers and upgrade messages in `lib/plan-limits.ts`):
+  - **Agent prompts:** 20/month free; `agent_prompts_500` / `agent_prompts_2000` per member (pooled) on paid plans. Every prompt a user sends (not tool follow-ups) is recorded in `AgentPrompt` per owner and counted per calendar month (UTC); rows survive workspace deletion. `/api/agent` checks the limit **before** calling Gemini and returns HTTP 402 `prompt_limit_reached`; the chat opens the upgrade dialog and shows an inline note.
+  - **Workspaces:** 3 per owner without `unlimited_workspaces`, checked in `createWorkspace`.
+  - **Public links:** need `public_sharing`, checked when turning sharing on and when a shared page is opened (links stop working after a downgrade).
+  - **PDF export:** needs `pdf_export`; the workspace page passes the flag to the Share dialog (export runs in the browser, so this is a UI lock).
+  - Limit results are returned from server actions, not thrown, since Next hides thrown messages in production. Each opens the upgrade dialog with its reason.
+- **Not done yet:** removing the unused `User.plan` column.
+
 ## Sharing & PDF Export
 
 - **Share dialog** (header Share button): an on/off switch for a public read-only link, plus Copy and Reset. Turning sharing on (or resetting) generates a fresh `Workspace.shareToken`, so old links stop working; off sets it to null.
@@ -186,10 +207,35 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
 Reference: [piyush-eon/ai-app-builder](https://github.com/piyush-eon/ai-app-builder) (Forge, the prior agentic-app-builder project) — reusing its proven Clerk + DB pattern rather than redesigning from scratch.
 
 - **ORM: Prisma**, not Drizzle (original stack draft said Drizzle — switched after reviewing the reference repo's working Prisma setup; no strong technical reason to prefer Drizzle for this project specifically, and reusing a battle-tested pattern reduces build risk and video prep time). Uses `@prisma/adapter-pg` driver adapter against Supabase's Postgres connection string — Prisma 7's adapter-based engine resolves the old serverless cold-start concerns that used to favor Drizzle.
-- **User sync pattern (`checkUser`)**: on each authenticated request, look up the local `User` row by `clerkId`; create it on first sight (free plan defaults), reconcile plan/credits from Clerk Billing's `auth().has({ plan: "..." })` check into local columns if it has changed. Local DB is the source of truth for app-side plan/usage state; Clerk is the source of truth for the actual subscription.
+- **User sync pattern (`checkUser`)**: on each authenticated request, look up the local `User` row by `clerkId` and create it on first sight. Plans are **not** copied into the database: Clerk Billing is the only source of truth for subscriptions, read on demand (see "Billing"). Usage is the one billing fact stored locally (`AgentPrompt`).
 - **Data access: Server Actions only** — `"use server"` functions in an `actions/` directory, called directly from client components. No client-side data-fetching library (see TanStack Query decision below).
-- **Schema conventions to carry over**: `cuid()` ids, `onDelete: Cascade` on relations back to `User`, plan reconciled onto the `User` row itself rather than a separate billing table (kept simple since Clerk Billing owns the actual subscription). Note: the reference repo uses a *credits* system (numeric balance spent per generation) — Outpost has not decided to use credits specifically; only "capped actions/month" has been discussed, unfinalized. Don't assume credits carry over without deciding that explicitly.
-- **Not yet drafted**: actual Outpost schema (Workspace, Surface types for canvas/doc/task, Member/role table, agent action log for usage metering) — first real task for the build session.
+- **Schema conventions carried over**: `cuid()` ids, `onDelete: Cascade` on relations back to `User`. Unlike the reference repo's stored credit balance, Outpost counts prompts per month against a plan allowance (see "Billing").
+
+### Database schema (`prisma/schema.prisma`, Supabase Postgres)
+
+No member or role tables: org membership and roles live in Clerk Organizations. No plan tables: subscriptions live in Clerk Billing.
+
+| Model | Key fields | Notes |
+|---|---|---|
+| `User` | `clerkId` (unique), `email` (unique), `name`, `imageUrl`, `plan` | Local mirror of the Clerk user, created by `checkUser`. **`plan` (enum `Plan`: FREE, PRO) is legacy and unused**, since plans come from Clerk; to be removed. |
+| `Workspace` | `name`, `description`, `creatorId` → User, `clerkOrgId` (null = personal), `status` (enum `WorkspaceStatus`), `position` (Float), `shareToken` (unique, null = sharing off) | Indexed on `creatorId` and `clerkOrgId`. `status` + `position` place it on the board. |
+| `Doc` | `workspaceId` (unique), `yjsState` (Bytes), `content` (JSON) | 1:1 with Workspace. `yjsState` is the real-time collaboration source of truth; `content` is a readable JSON copy for server-side use (shared page). |
+| `Canvas` | `workspaceId` (unique), `content` (JSON) | 1:1 with Workspace. Last saved tldraw snapshot: the backup that re-seeds an empty sync room and feeds the shared page. |
+| `AgentPrompt` | `ownerId` (Clerk org or user id), `userId` → User, `workspaceId` → Workspace (nullable), `createdAt` | One row per prompt sent. Indexed on (`ownerId`, `createdAt`) for monthly counts. |
+
+**Deletion:** Doc and Canvas cascade with their Workspace; AgentPrompt rows are kept (`workspaceId` set to null) so usage can't be reset by deleting a workspace; everything cascades with its User.
+
+**Migrations** (in `prisma/migrations/`, oldest first):
+1. `init`: initial User / workspace tables.
+2. `switch_to_clerk_orgs`, `require_clerk_org_id`: workspaces keyed to Clerk orgs instead of local membership.
+3. `doc_canvas_workspace_model`: every workspace gets exactly one Doc and one Canvas.
+4. `workspace_board`, `backfill_workspace_positions`: board `status` + `position`, with existing workspaces numbered by recency.
+5. `workspace_review_and_description`: `IN_REVIEW` status and `description`.
+6. `doc_yjs_state`: `Doc.yjsState` for real-time doc collaboration.
+7. `workspace_share_token`: `Workspace.shareToken` for public links.
+8. `agent_prompt_usage`: replaced the never-used `AgentActionLog` (one row per tool call) with `AgentPrompt` (one row per prompt).
+
+**Workflow note:** when `prisma migrate dev` can't run (non-interactive environments, or warnings it wants confirmed), the migration SQL is generated with `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`, reviewed, saved as a new migration folder, and applied with `prisma migrate deploy`; a second `migrate diff` should then print an empty migration. After any schema change, run `prisma generate` and restart the dev server.
 
 ### TanStack Query — decided against
 

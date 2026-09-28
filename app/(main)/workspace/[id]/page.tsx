@@ -11,6 +11,8 @@ import { DocEditor } from "@/components/DocEditorLoader";
 import { CanvasEditor } from "@/components/CanvasEditor";
 import { AgentToggleButton } from "@/components/AgentToggleButton";
 import { ShareDialog } from "@/components/ShareDialog";
+import { getEntitlements, workspaceOwnerId } from "@/lib/billing";
+import { PlanButton } from "@/components/PlanButton";
 import { WorkspaceEditorsProvider } from "@/components/WorkspaceEditorsContext";
 import {
   ResizableHandle,
@@ -40,11 +42,14 @@ export default async function WorkspacePage({
     select: {
       name: true,
       shareToken: true,
+      clerkOrgId: true,
+      creator: { select: { clerkId: true } },
       doc: { select: { content: true, yjsState: true } },
       canvas: { select: { content: true } },
     },
   });
   if (!workspace) notFound();
+  const entitlements = await getEntitlements(workspaceOwnerId(workspace));
 
   const showDoc = view === "doc" || view === "both";
   const showCanvas = view === "canvas" || view === "both";
@@ -91,8 +96,15 @@ export default async function WorkspacePage({
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-2">
-            <ShareDialog workspaceId={id} workspaceName={workspace.name} initialShareToken={workspace.shareToken} />
-            <AgentToggleButton initialPrompt={typeof prompt === "string" ? prompt : undefined} />
+            <PlanButton upgradeOnlyWhenOut />
+            <ShareDialog
+              workspaceId={id}
+              workspaceName={workspace.name}
+              initialShareToken={workspace.shareToken}
+              canShare={entitlements.publicSharing}
+              canExportPdf={entitlements.pdfExport}
+            />
+            <AgentToggleButton workspaceId={id} initialPrompt={typeof prompt === "string" ? prompt : undefined} />
           </div>
         </header>
 

@@ -7,6 +7,8 @@ import { isToolUIPart, isDynamicToolUIPart } from "ai";
 import type { WorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 import { Button } from "@/components/ui/button";
 import { MicButton } from "@/components/MicButton";
+import { useUpgradeDialog } from "@/components/UpgradeDialog";
+import { PROMPT_LIMIT_ERROR, UPGRADE_REASONS } from "@/lib/plan-limits";
 
 const DEFAULT_WIDTH = 360;
 const MIN_WIDTH = 280;
@@ -16,7 +18,8 @@ export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; is
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [input, setInput] = useState("");
   const isDragging = useRef(false);
-  const { messages, sendMessage, stop, status } = chat;
+  const { messages, sendMessage, stop, status, error } = chat;
+  const openUpgrade = useUpgradeDialog();
 
   // Drag-to-resize on the panel's left edge — independent of the doc/canvas ResizablePanelGroup,
   // since this panel floats on top rather than participating in that split.
@@ -140,6 +143,24 @@ export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; is
               <span className="size-1 animate-bounce rounded-full bg-muted-foreground" />
             </span>
             Thinking...
+          </p>
+        )}
+        {error && (
+          <p className="rounded-md border border-white/10 bg-white/3 px-3 py-2 text-xs text-muted-foreground">
+            {error.message.includes(PROMPT_LIMIT_ERROR) ? (
+              <>
+                You&apos;re out of agent prompts this month.{" "}
+                <button
+                  type="button"
+                  onClick={() => openUpgrade(UPGRADE_REASONS.prompts)}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Upgrade
+                </button>
+              </>
+            ) : (
+              "Something went wrong. Try sending that again."
+            )}
           </p>
         )}
       </div>

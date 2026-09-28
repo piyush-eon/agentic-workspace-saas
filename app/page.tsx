@@ -5,11 +5,11 @@ import {
   LayoutGrid,
   FileText,
   KanbanSquare,
-  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CanvasMock, DocsMock, BoardMock } from "@/components/SurfaceVisuals";
 import { MapAnnotations } from "@/components/MapAnnotations";
+import { PricingPlans } from "@/components/PricingPlans";
 
 export default function Home() {
   return (
@@ -172,27 +172,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonial — early-access framing kept honest since there's no real customer base yet */}
-      <section className="border-t border-white/10 px-6 py-24 md:px-10">
-        <div className="mx-auto max-w-3xl text-center">
-          <SectionLabel>03 · Field notes</SectionLabel>
-          <blockquote className="mt-2 text-2xl font-medium tracking-tight text-balance md:text-3xl">
-            &ldquo;It&apos;s the first AI tool where I actually trust the
-            diagram it gives me, because I watched it get built, step by step,
-            instead of guessing what a black box did.&rdquo;
-          </blockquote>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Users className="size-4" />
-            </div>
-            <div className="text-left text-sm">
-              <p className="font-medium">Early access tester</p>
-              <p className="text-muted-foreground">
-                Product designer, seed-stage startup
-              </p>
-            </div>
-          </div>
+      {/* Pricing: the same plans, prices and checkout as the pricing page, straight from Clerk */}
+      <section
+        id="pricing"
+        className="border-t border-white/10 px-6 py-24 md:px-10"
+      >
+        <div className="mx-auto mb-12 max-w-5xl text-center">
+          <SectionLabel>03 · Pricing</SectionLabel>
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            Start free, upgrade when it clicks
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
+            Upgrade just yourself, or your whole team, billed per member.
+          </p>
         </div>
+        <PricingPlans />
       </section>
 
       {/* Closing CTA, back over the map so the page opens and closes on it */}

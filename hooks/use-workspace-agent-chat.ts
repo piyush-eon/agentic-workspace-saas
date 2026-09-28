@@ -6,8 +6,11 @@ import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } fro
 import type { Editor } from "tldraw";
 import type { BlockNoteEditor } from "@blocknote/core";
 import { agentToolDefs, docToolDefs, fail, type ToolResult } from "@/lib/agent-tools";
+import { PROMPT_LIMIT_ERROR, UPGRADE_REASONS } from "@/lib/plan-limits";
 import { executeCanvasTool, summarizeCanvas, type ShapeIdMap } from "@/lib/agent-canvas";
 import { executeDocTool, summarizeDoc } from "@/lib/agent-doc";
+import { refreshPromptUsage } from "@/components/PlanButton";
+import { useUpgradeDialog } from "@/components/UpgradeDialog";
 
 type Editors = { canvasEditor: Editor | null; docEditor: BlockNoteEditor | null };
 
@@ -27,8 +30,9 @@ function runTool({ canvasEditor, docEditor }: Editors, idMap: ShapeIdMap, toolNa
   }
 }
 
-export function useWorkspaceAgentChat(editors: Editors) {
+export function useWorkspaceAgentChat(workspaceId: string, editors: Editors) {
   const idMap = useRef<ShapeIdMap>(new Map());
+  const openUpgrade = useUpgradeDialog();
   const editorsRef = useRef(editors);
   useEffect(() => {
     editorsRef.current = editors;
@@ -45,6 +49,7 @@ export function useWorkspaceAgentChat(editors: Editors) {
         body: () => {
           const { canvasEditor, docEditor } = editorsRef.current;
           return {
+            workspaceId,
             canvasContext: canvasEditor ? summarizeCanvas(canvasEditor) : null,
             docContext: docEditor ? summarizeDoc(docEditor) : null,
           };
@@ -55,6 +60,12 @@ export function useWorkspaceAgentChat(editors: Editors) {
   const chat = useChat({
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onFinish: refreshPromptUsage,
+    onError: (error) => {
+      if (!error.message.includes(PROMPT_LIMIT_ERROR)) return;
+      refreshPromptUsage();
+      openUpgrade(UPGRADE_REASONS.prompts);
+    },
     onToolCall: ({ toolCall }) => {
       const output = runTool(editorsRef.current, idMap.current, toolCall.toolName, toolCall.input);
       // Not awaited: the SDK checks for the automatic resubmit right after this callback returns.

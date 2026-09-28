@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Copy, FileText, LayoutGrid, RotateCcw, Share2 } from "lucide-react";
+import { Copy, FileText, LayoutGrid, Lock, RotateCcw, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { setWorkspaceSharing } from "@/actions/workspace";
 import { useFetch } from "@/hooks/use-fetch";
 import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
+import { useUpgradeDialog } from "@/components/UpgradeDialog";
+import { UPGRADE_REASONS, type LimitError } from "@/lib/plan-limits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,11 +41,17 @@ export function ShareDialog({
   workspaceId,
   workspaceName,
   initialShareToken,
+  canShare,
+  canExportPdf,
 }: {
   workspaceId: string;
   workspaceName: string;
   initialShareToken: string | null;
+  // From the workspace owner's plan, checked on the server (sharing is enforced there too).
+  canShare: boolean;
+  canExportPdf: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   const [shareToken, setShareToken] = useState(initialShareToken);
   const [exporting, setExporting] = useState<"doc" | "canvas" | null>(null);
   const { canvasEditor, docEditor } = useWorkspaceEditors();
@@ -51,9 +59,20 @@ export function ShareDialog({
   const origin = useSyncExternalStore(noopSubscribe, getOrigin, getServerOrigin);
   const shareUrl = `${origin}/shared/${shareToken}`;
 
+  const openUpgrade = useUpgradeDialog();
+
+  // Close this dialog first: two modal dialogs at once fight over focus.
+  const showUpgrade = (reason: LimitError) => {
+    setOpen(false);
+    openUpgrade(UPGRADE_REASONS[reason]);
+  };
+
   const updateSharing = async (enabled: boolean) => {
-    const token = await setSharingFn(workspaceId, enabled);
-    if (token !== undefined) setShareToken(token);
+    if (enabled && !canShare) return showUpgrade("sharing");
+    const result = await setSharingFn(workspaceId, enabled);
+    if (!result) return;
+    if ("limit" in result) return showUpgrade(result.limit);
+    setShareToken(result.shareToken);
   };
 
   const copyLink = async () => {
@@ -117,7 +136,7 @@ export function ShareDialog({
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Share2 className="size-4" />
@@ -135,7 +154,10 @@ export function ShareDialog({
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-4">
             <Label htmlFor="share-link" className="flex flex-col items-start gap-1">
-              Public link
+              <span className="flex items-center gap-1.5">
+                Public link
+                {!canShare && <Lock className="size-3 text-muted-foreground" />}
+              </span>
               <span className="text-xs font-normal text-muted-foreground">
                 Anyone with the link can view the doc and canvas, without signing in.
               </span>
@@ -171,23 +193,31 @@ export function ShareDialog({
         <Separator />
 
         <div className="space-y-3">
-          <Label>Export as PDF</Label>
+          <Label className="flex items-center gap-1.5">
+            Export as PDF
+            {!canExportPdf && <Lock className="size-3 text-muted-foreground" />}
+          </Label>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" className="gap-2" onClick={exportDoc} disabled={!docEditor || exporting !== null}>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={canExportPdf ? exportDoc : () => showUpgrade("pdfExport")}
+              disabled={canExportPdf && (!docEditor || exporting !== null)}
+            >
               <FileText className="size-4" />
               {exporting === "doc" ? "Exporting..." : "Doc"}
             </Button>
             <Button
               variant="outline"
               className="gap-2"
-              onClick={exportCanvas}
-              disabled={!canvasEditor || exporting !== null}
+              onClick={canExportPdf ? exportCanvas : () => showUpgrade("pdfExport")}
+              disabled={canExportPdf && (!canvasEditor || exporting !== null)}
             >
               <LayoutGrid className="size-4" />
               {exporting === "canvas" ? "Exporting..." : "Canvas"}
             </Button>
           </div>
-          {(!docEditor || !canvasEditor) && (
+          {canExportPdf && (!docEditor || !canvasEditor) && (
             <p className="text-xs text-muted-foreground">
               Switch to the Both view to export {!docEditor ? "the doc" : "the canvas"}.
             </p>

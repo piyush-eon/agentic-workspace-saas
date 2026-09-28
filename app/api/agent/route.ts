@@ -1,7 +1,11 @@
 import { google } from "@ai-sdk/google";
-import { auth } from "@clerk/nextjs/server";
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { agentToolDefs } from "@/lib/agent-tools";
+import { PROMPT_LIMIT_ERROR } from "@/lib/plan-limits";
+import { checkUser } from "@/actions/check-user";
+import { canAccessWorkspace } from "@/lib/workspace-access";
+import { prisma } from "@/lib/prisma";
+import { getPromptUsage, recordPrompt, workspaceOwnerId } from "@/lib/billing";
 
 const SYSTEM_PROMPT = `You are Outpost's workspace agent. A workspace has two surfaces: a canvas (an infinite whiteboard for diagrams) and a doc (a rich-text document). You change them only by calling tools, never by describing changes in text. Never use em dashes in your replies.
 
@@ -33,14 +37,36 @@ Canvas layout rules: diagrams must never look cluttered or have overlapping shap
 const NOT_OPEN = "(not open in this view, so its tools will fail)";
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const user = await checkUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const {
     messages,
+    workspaceId,
     canvasContext,
     docContext,
-  }: { messages: UIMessage[]; canvasContext: string | null; docContext: string | null } = await req.json();
+  }: {
+    messages: UIMessage[];
+    workspaceId: string;
+    canvasContext: string | null;
+    docContext: string | null;
+  } = await req.json();
+
+  if (!(await canAccessWorkspace(workspaceId))) return new Response("Workspace not found", { status: 404 });
+
+  // Only a message the user typed counts as a prompt; the automatic follow-ups after tool calls
+  // end with the agent's own message, so a prompt that draws 20 shapes still counts once.
+  if (messages.at(-1)?.role === "user") {
+    const workspace = await prisma.workspace.findUniqueOrThrow({
+      where: { id: workspaceId },
+      select: { clerkOrgId: true, creator: { select: { clerkId: true } } },
+    });
+    const ownerId = workspaceOwnerId(workspace);
+    const { used, limit } = await getPromptUsage(ownerId);
+    // Checked before calling Gemini, so an exhausted plan costs nothing.
+    if (used >= limit) return Response.json({ error: PROMPT_LIMIT_ERROR, used, limit }, { status: 402 });
+    await recordPrompt(ownerId, user.id, workspaceId);
+  }
 
   const result = streamText({
     model: google("gemini-3.5-flash-lite"),

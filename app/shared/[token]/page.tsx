@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { Block } from "@blocknote/core";
 import type { TLEditorSnapshot } from "tldraw";
 import { prisma } from "@/lib/prisma";
+import { getEntitlements, workspaceOwnerId } from "@/lib/billing";
 import { Badge } from "@/components/ui/badge";
 import { DocViewer } from "@/components/DocEditorLoader";
 import { CanvasViewer } from "@/components/CanvasViewer";
@@ -21,11 +22,15 @@ export default async function SharedPage({ params }: PageProps<"/shared/[token]"
     where: { shareToken: token },
     select: {
       name: true,
+      clerkOrgId: true,
+      creator: { select: { clerkId: true } },
       doc: { select: { content: true } },
       canvas: { select: { content: true } },
     },
   });
   if (!workspace) notFound();
+  // Links stop working if the owner's plan no longer includes sharing (e.g. after cancelling).
+  if (!(await getEntitlements(workspaceOwnerId(workspace))).publicSharing) notFound();
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">

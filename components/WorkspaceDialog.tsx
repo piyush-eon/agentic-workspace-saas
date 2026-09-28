@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createWorkspace, updateWorkspace } from "@/actions/workspace";
+import { useUpgradeDialog } from "@/components/UpgradeDialog";
+import { UPGRADE_REASONS } from "@/lib/plan-limits";
 import { useFetch } from "@/hooks/use-fetch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +59,7 @@ function WorkspaceForm({ workspace, onDone }: { workspace?: EditableWorkspace; o
   const { fn: createWorkspaceFn, loading: creating } = useFetch(createWorkspace);
   const { fn: updateWorkspaceFn, loading: updating } = useFetch(updateWorkspace);
   const loading = creating || updating;
+  const openUpgrade = useUpgradeDialog();
 
   const handleSubmit = async () => {
     if (workspace) {
@@ -64,10 +67,11 @@ function WorkspaceForm({ workspace, onDone }: { workspace?: EditableWorkspace; o
       if (updated) onDone();
       return;
     }
-    const created = await createWorkspaceFn(name, description);
-    if (!created) return;
+    const result = await createWorkspaceFn(name, description);
+    if (!result) return;
     onDone();
-    router.push(`/workspace/${created.id}`);
+    if ("limit" in result) return openUpgrade(UPGRADE_REASONS[result.limit]);
+    router.push(`/workspace/${result.workspace.id}`);
   };
 
   return (

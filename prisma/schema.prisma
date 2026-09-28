@@ -35,7 +35,7 @@ model User {
   // Workspaces this user created — membership/roles for all workspaces live in Clerk Organizations,
   // not here, so this is just "who to blame/bill" rather than an access-control source of truth.
   createdWorkspaces Workspace[]
-  actionLogs        AgentActionLog[]
+  agentPrompts      AgentPrompt[]
 }
 
 model Workspace {
@@ -56,12 +56,12 @@ model Workspace {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  creator    User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   // Every workspace is always exactly one doc + one canvas, paired — not a generic list of
   // surfaces. Both are created alongside the workspace itself.
-  doc        Doc?
-  canvas     Canvas?
-  actionLogs AgentActionLog[]
+  doc          Doc?
+  canvas       Canvas?
+  agentPrompts AgentPrompt[]
 
   @@index([creatorId])
   @@index([clerkOrgId])
@@ -91,18 +91,19 @@ model Canvas {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
-// One row per agent tool-call invocation — usage metering + audit trail for cross-surface tools.
-model AgentActionLog {
+// One row per prompt a user sends to the agent, counted per owner each month for usage limits.
+// Rows outlive their workspace (SetNull), so deleting a workspace can't reset usage.
+model AgentPrompt {
   id          String   @id @default(cuid())
-  workspaceId String
+  // Who the prompt counts against: the workspace's Clerk org id, or the Clerk user id for a
+  // personal workspace. Clerk prefixes ids ("org_", "user_"), so the two never collide.
+  ownerId     String
   userId      String
-  toolName    String
-  input       Json?
+  workspaceId String?
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
-  @@index([workspaceId])
-  @@index([userId])
+  @@index([ownerId, createdAt])
 }

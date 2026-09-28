@@ -7,6 +7,8 @@ import { createWorkspace } from "@/actions/workspace";
 import { useFetch } from "@/hooks/use-fetch";
 import { Button } from "@/components/ui/button";
 import { MicButton } from "@/components/MicButton";
+import { useUpgradeDialog } from "@/components/UpgradeDialog";
+import { UPGRADE_REASONS } from "@/lib/plan-limits";
 
 const MAX_NAME_LENGTH = 48;
 
@@ -33,13 +35,16 @@ export function DashboardPrompt() {
   const [prompt, setPrompt] = useState("");
   const router = useRouter();
   const { fn: createWorkspaceFn, loading } = useFetch(createWorkspace);
+  const openUpgrade = useUpgradeDialog();
   const busy = loading ?? false;
 
   const handleSubmit = async () => {
     const trimmed = prompt.trim();
     if (!trimmed || busy) return;
-    const workspace = await createWorkspaceFn(nameFromPrompt(trimmed), trimmed);
-    if (workspace) router.push(`/workspace/${workspace.id}?prompt=${encodeURIComponent(trimmed)}`);
+    const result = await createWorkspaceFn(nameFromPrompt(trimmed), trimmed);
+    if (!result) return;
+    if ("limit" in result) return openUpgrade(UPGRADE_REASONS[result.limit]);
+    router.push(`/workspace/${result.workspace.id}?prompt=${encodeURIComponent(trimmed)}`);
   };
 
   return (
