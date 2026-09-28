@@ -34,7 +34,7 @@ function sortPlans(plans: Plan[]) {
   return [...plans].sort((a, b) => cost(a) - cost(b));
 }
 
-// Shared by the pricing page, the landing page and the upgrade dialog. Plans, prices and features
+// Shared by the landing page and the upgrade dialog. Plans, prices and features
 // come from the Clerk dashboard. Paid cards open Clerk's checkout drawer; team plans charge the
 // active organization. `onCheckoutStart` lets a container (like a dialog) close before it opens.
 export function PricingPlans({

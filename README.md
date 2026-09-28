@@ -128,7 +128,6 @@ app/
   (main)/workspaces/        Kanban board of all workspaces
   (main)/workspace/[id]/    The workspace: doc, canvas and agent
   shared/[token]/           Public read-only view
-  pricing/                  Pricing page
   api/agent/                The agent: Gemini, tools and prompt limits
 actions/                    Server Actions (workspaces, docs, canvas, usage)
 components/                 Shared UI (a page's own components live in its _components/ folder)
@@ -172,6 +171,7 @@ Outpost runs on free tiers out of the box. As you grow, here's how to scale each
 | `npm run build` | Production build           |
 | `npm run start` | Serve the production build |
 | `npm run lint`  | Lint with ESLint           |
+| `npm run seed -- you@email.com [org_id]` | Add demo workspaces (sign in once first) |
 
 After changing `prisma/schema.prisma`, create and apply a migration, run `npx prisma generate`, and restart the dev server.
 
