@@ -7,14 +7,7 @@ import {
   type TLShapePartial,
   type VecModel,
 } from "tldraw";
-import {
-  DEFAULT_TABLE_WIDTH,
-  HEADER_HEIGHT,
-  ROW_HEIGHT,
-  getTableHeight,
-  type EntityRow,
-  type EntityTableShape,
-} from "@/components/EntityTable/EntityTableShape";
+import { TABLE_WIDTH, getTableHeight, newRow, rowAnchorY, type EntityRow, type EntityTableShape } from "@/components/EntityTable/EntityTableShape";
 import { canvasToolDefs, fail, normalizeModelText, ok, type ToolResult } from "@/lib/agent-tools";
 
 // Maps the model's caller-assigned ids ("rect-1") to real tldraw ids, so later calls in the same
@@ -66,9 +59,7 @@ function lookupTable(editor: Editor, idMap: ShapeIdMap, id: string) {
 // Where an arrow should attach on a table: the vertical center of the named column's row.
 function rowAnchor(table: EntityTableShape, columnName: string): VecModel {
   const index = table.props.rows.findIndex((r) => r.name === columnName);
-  if (index === -1) return { x: 0.5, y: 0.5 };
-  const y = HEADER_HEIGHT + index * ROW_HEIGHT + ROW_HEIGHT / 2;
-  return { x: 0.5, y: y / getTableHeight(table.props.rows.length) };
+  return { x: 0.5, y: index === -1 ? 0.5 : rowAnchorY(index, table.props.rows.length) };
 }
 
 function createArrowBetween(
@@ -184,13 +175,13 @@ export function executeCanvasTool(editor: Editor, idMap: ShapeIdMap, toolName: s
 
     case "createEntityTable": {
       const input = defs.createEntityTable.inputSchema.parse(rawInput);
-      const rows: EntityRow[] = input.columns.map((c) => ({ id: crypto.randomUUID(), ...c }));
+      const rows = input.columns.map(newRow);
       editor.createShape<EntityTableShape>({
         id: resolveNewId(idMap, input.id),
         type: "entity-table",
         x: input.position.x,
         y: input.position.y,
-        props: { w: DEFAULT_TABLE_WIDTH, h: getTableHeight(rows.length), tableName: input.tableName, rows },
+        props: { w: TABLE_WIDTH, h: getTableHeight(rows.length), tableName: input.tableName, rows },
       });
       return ok();
     }
@@ -235,7 +226,7 @@ type ColumnInput =
 
 // Returns the table's new rows, or null when the named column doesn't exist.
 function columnRows(rows: EntityRow[], toolName: string, input: ColumnInput): EntityRow[] | null {
-  if (!("columnName" in input)) return [...rows, { id: crypto.randomUUID(), ...input }];
+  if (!("columnName" in input)) return [...rows, newRow(input)];
   if (!rows.some((r) => r.name === input.columnName)) return null;
   if (toolName === "removeColumn") return rows.filter((r) => r.name !== input.columnName);
 

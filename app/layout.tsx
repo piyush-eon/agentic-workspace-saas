@@ -27,7 +27,8 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: "Outpost: Agentic Workspace",
-  description: "An AI agent that draws and writes alongside you and your team, live.",
+  description:
+    "An AI agent that draws and writes alongside you and your team, live.",
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",
@@ -36,8 +37,11 @@ export const metadata: Metadata = {
   // Link previews (Slack, X, iMessage...). On Vercel, Next fills in the site URL for these paths.
   openGraph: {
     title: "Outpost: Agentic Workspace",
-    description: "An AI agent that draws and writes alongside you and your team, live.",
-    images: [{ url: "/social/og-image.png", width: 1200, height: 630, alt: "Outpost" }],
+    description:
+      "An AI agent that draws and writes alongside you and your team, live.",
+    images: [
+      { url: "/social/og-image.png", width: 1200, height: 630, alt: "Outpost" },
+    ],
   },
   twitter: { card: "summary_large_image", images: ["/social/og-image.png"] },
 };
@@ -45,7 +49,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // Outpost is dark-only, so Clerk's baseTheme is hardcoded to dark rather than synced to a toggle.
-    <ClerkProvider appearance={{ theme: dark, variables: { colorPrimary: "oklch(0.74 0.16 55)" } }}>
+    <ClerkProvider
+      appearance={{
+        theme: dark,
+        variables: { colorPrimary: "oklch(0.74 0.16 55)" },
+      }}
+    >
       <html
         lang="en"
         className={`dark ${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}
@@ -56,7 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <AppShell>{children}</AppShell>
             </UpgradeDialogProvider>
           </TooltipProvider>
-          <Toaster />
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>

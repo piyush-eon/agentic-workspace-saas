@@ -12,7 +12,7 @@ export function statusTitle(status: WorkspaceStatus) {
   return WORKSPACE_STATUSES.find((s) => s.status === status)?.title ?? status;
 }
 
-// Fields every workspace card needs, including what lastActivityAt reads.
+// Fields every workspace card needs, including what withLastActivity reads.
 export const workspaceCardSelect = {
   id: true,
   name: true,
@@ -24,18 +24,11 @@ export const workspaceCardSelect = {
   canvas: { select: { updatedAt: true } },
 } as const;
 
+type Dated = { updatedAt: Date } | null;
+
 // A workspace's own updatedAt only changes on rename or move, so real activity also counts
 // edits to its doc and canvas.
-export function lastActivityAt(workspace: {
-  updatedAt: Date;
-  doc: { updatedAt: Date } | null;
-  canvas: { updatedAt: Date } | null;
-}) {
-  return new Date(
-    Math.max(
-      workspace.updatedAt.getTime(),
-      workspace.doc?.updatedAt.getTime() ?? 0,
-      workspace.canvas?.updatedAt.getTime() ?? 0
-    )
-  );
+export function withLastActivity<T extends { updatedAt: Date; doc: Dated; canvas: Dated }>(workspace: T) {
+  const times = [workspace.updatedAt, workspace.doc?.updatedAt, workspace.canvas?.updatedAt];
+  return { ...workspace, lastActivity: new Date(Math.max(...times.map((t) => t?.getTime() ?? 0))) };
 }

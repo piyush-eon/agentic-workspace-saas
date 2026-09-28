@@ -30,11 +30,8 @@ const SAVE_DEBOUNCE_MS = 1000;
 
 const shapeUtils = [EntityTableShapeUtil];
 
-// Hides tldraw's default style panel (color/fill/dash/size), page menu, and main menu for a
-// cleaner, Eraser-style UI — none of these matter for the live-agent-drawing demo this surface
-// is built around, and a single-page canvas doesn't need a page switcher. Toolbar switches to
-// a vertical rail (left side) instead of the default horizontal bottom-center bar, with an
-// extra button appended for creating ERD entity tables.
+// A cleaner, single-page canvas: no style panel, page menu or main menu, and a vertical toolbar
+// on the left with our Add table button.
 const components: TLComponents = {
   StylePanel: null,
   PageMenu: null,
@@ -121,8 +118,7 @@ export function CanvasEditor({
       { source: "user", scope: "document" }
     );
 
-    // Snap freshly-created arrow bindings against entity tables to the nearest row's vertical
-    // center — see snapArrowToRow.ts for why no custom BindingUtil is needed for this.
+    // Arrows drawn onto an ERD table snap to the nearest row (see snapArrowToRow.ts).
     editor.store.listen(
       (entry) => {
         for (const record of Object.values(entry.changes.added)) {
@@ -140,11 +136,8 @@ export function CanvasEditor({
 
   return (
     // isolate keeps tldraw's high z-index layers inside the canvas, so dialogs render above them.
+    // The toolbar moves up into the space left by the hidden page menu (! beats tldraw.css).
     <div className="isolate h-full [&_.tlui-main-toolbar--vertical]:top-4!">
-      {/* tldraw's default vertical-toolbar top offset (90px) reserves space for the page menu +
-          "back to content" button, both of which we hide — pull it up to match. !important is
-          needed here since tldraw.css loads after globals.css in the bundle (imported inside
-          this component, not the root layout), so it otherwise wins on equal specificity. */}
       <Tldraw
         store={store}
         user={currentUser}

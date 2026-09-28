@@ -134,7 +134,7 @@ app/
   pricing/                  Pricing page
   api/agent/                The agent: Gemini, tools and prompt limits
 actions/                    Server Actions (workspaces, docs, canvas, usage)
-components/                 UI, including the doc and canvas editors
+components/                 Shared UI (a page's own components live in its _components/ folder)
   EntityTable/              The custom ERD table shape for tldraw
 hooks/                      Agent chat, collaborative doc and more
 lib/
@@ -155,7 +155,7 @@ These are deliberate simplifications. Each one has a straightforward production 
 
 | Shortcut                                                                                                                                                                              | What to do for production                                                                                                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The canvas syncs through **tldraw's hosted demo server** (`useSyncDemo`): public rooms, data may be wiped, and no uptime guarantee. The canvas is also saved to Postgres as a backup. | Deploy your own sync server from tldraw's template (`npm create tldraw@latest -- --template sync-cloudflare`) and switch to `useSync` in `components/CanvasEditor.tsx`. |
+| The canvas syncs through **tldraw's hosted demo server** (`useSyncDemo`): public rooms, data may be wiped, and no uptime guarantee. The canvas is also saved to Postgres as a backup. | Deploy your own sync server from tldraw's template (`npm create tldraw@latest -- --template sync-cloudflare`) and switch to `useSync` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. |
 | Doc collaboration uses **public** Supabase Realtime channels.                                                                                                                         | Use private channels with Supabase Realtime Authorization, and connect Clerk to Supabase so clients join with their Clerk session.                                      |
 | **PDF export** is only locked in the UI, since it runs in the browser.                                                                                                                | Fine for most apps. Move export to the server if it must be strictly enforced.                                                                                          |
 | Billing uses Clerk's **development gateway**.                                                                                                                                         | Connect your own Stripe account in Clerk before taking real payments.                                                                                                   |

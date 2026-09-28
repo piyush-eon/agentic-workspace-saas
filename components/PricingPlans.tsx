@@ -93,7 +93,6 @@ export function PricingPlans({
           ? [0, 1].map((i) => <div key={i} className="h-96 animate-pulse rounded-2xl border border-white/8 bg-white/3" />)
           : sortedPlans.map((plan) => {
               const price = planPrice(plan);
-              const isPaid = !plan.isDefault;
               const isCurrent =
                 activePlanIds.has(plan.id) || (!!isSignedIn && plan.isDefault && activePlanIds.size === 0);
               const isFeatured = plan.id === featuredPlanId;
@@ -144,7 +143,6 @@ export function PricingPlans({
                   <PlanAction
                     plan={plan}
                     payerType={payerType}
-                    isPaid={isPaid}
                     isFeatured={isFeatured}
                     isCurrent={isCurrent}
                     onCheckoutStart={onCheckoutStart}
@@ -160,20 +158,19 @@ export function PricingPlans({
 function PlanAction({
   plan,
   payerType,
-  isPaid,
   isFeatured,
   isCurrent,
   onCheckoutStart,
 }: {
   plan: Plan;
   payerType: PayerType;
-  isPaid: boolean;
   isFeatured: boolean;
   isCurrent: boolean;
   onCheckoutStart?: () => void;
 }) {
   const { isSignedIn, orgId, has } = useAuth();
   const { organization } = useOrganization();
+  const isPaid = !plan.isDefault;
 
   if (!isSignedIn) {
     return (

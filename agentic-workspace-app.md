@@ -152,7 +152,7 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
   - Rooms are public: anyone with a room id can join, so Clerk org access checks don't apply to the live canvas.
   - The demo server wipes data periodically. The Postgres canvas autosave is the safety net, since an empty room gets re-seeded from Postgres on load.
   - tldraw documents it as prototyping-only, with no uptime guarantees.
-- **Tell viewers:** for a real product, deploy your own sync server with tldraw's Cloudflare template (`npm create tldraw@latest -- --template sync-cloudflare`), register the custom `entity-table` shape on it, check Clerk org membership before a client joins a room, then swap `useSyncDemo` for `useSync({ uri })` in `components/CanvasEditor.tsx`. Once the server stores the canvas, the Postgres canvas autosave can be removed.
+- **Tell viewers:** for a real product, deploy your own sync server with tldraw's Cloudflare template (`npm create tldraw@latest -- --template sync-cloudflare`), register the custom `entity-table` shape on it, check Clerk org membership before a client joins a room, then swap `useSyncDemo` for `useSync({ uri })` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. Once the server stores the canvas, the Postgres canvas autosave can be removed.
 
 ## Billing (Clerk Billing)
 

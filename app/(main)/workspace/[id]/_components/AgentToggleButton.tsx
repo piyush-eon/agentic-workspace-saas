@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AgentChatPanel } from "@/components/AgentChatPanel";
+import { AgentChatPanel } from "./AgentChatPanel";
 import { useWorkspaceEditors } from "@/components/WorkspaceEditorsContext";
 import { useWorkspaceAgentChat } from "@/hooks/use-workspace-agent-chat";
 

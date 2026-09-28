@@ -6,12 +6,12 @@ import type { TLEditorSnapshot } from "tldraw";
 import { prisma } from "@/lib/prisma";
 import { canAccessWorkspace } from "@/lib/workspace-access";
 import { Button } from "@/components/ui/button";
-import { EditableWorkspaceName } from "@/components/EditableWorkspaceName";
+import { EditableWorkspaceName } from "./_components/EditableWorkspaceName";
 import { DocEditor } from "@/components/DocEditorLoader";
-import { CanvasEditor } from "@/components/CanvasEditor";
-import { AgentToggleButton } from "@/components/AgentToggleButton";
-import { ShareDialog } from "@/components/ShareDialog";
-import { getEntitlements, workspaceOwnerId } from "@/lib/billing";
+import { CanvasEditor } from "./_components/CanvasEditor";
+import { AgentToggleButton } from "./_components/AgentToggleButton";
+import { ShareDialog } from "./_components/ShareDialog";
+import { getEntitlements, workspaceOwnerId, workspaceOwnerSelect } from "@/lib/billing";
 import { PlanButton } from "@/components/PlanButton";
 import { WorkspaceEditorsProvider } from "@/components/WorkspaceEditorsContext";
 import {
@@ -42,8 +42,7 @@ export default async function WorkspacePage({
     select: {
       name: true,
       shareToken: true,
-      clerkOrgId: true,
-      creator: { select: { clerkId: true } },
+      ...workspaceOwnerSelect,
       doc: { select: { content: true, yjsState: true } },
       canvas: { select: { content: true } },
     },
@@ -55,13 +54,10 @@ export default async function WorkspacePage({
   const showCanvas = view === "canvas" || view === "both";
 
   return (
-    // WorkspaceEditorsProvider wraps header + panels so header UI (agent panel, Share dialog) can
-    // reach the live canvas and doc editors — they're siblings, not parent/child, so context is
-    // the bridge.
+    // Lets header UI (agent panel, Share dialog) reach the live doc and canvas editors.
     <WorkspaceEditorsProvider>
       <div className="flex h-dvh flex-col overflow-hidden">
-        {/* Real header row (not a floating overlay) — matches Eraser's layout: logo/name left,
-            Document/Both/Canvas segmented control centered. Logo doubles as the back-to-dashboard link. */}
+        {/* Logo (back to dashboard) and name left, view switcher centered, actions right. */}
         <header className="flex h-14 shrink-0 items-center border-b border-white/6 bg-background px-4">
           <div className="flex flex-1 items-center gap-3">
             <Link
@@ -108,8 +104,7 @@ export default async function WorkspacePage({
           </div>
         </header>
 
-        {/* key forces a fresh panel group when the visible set changes, so react-resizable-panels
-            doesn't try to reconcile a stale layout (e.g. 2 panels -> 1) against old panel ids */}
+        {/* key gives each view a fresh panel group, so an old layout isn't applied to new panels */}
         <ResizablePanelGroup key={view} orientation="horizontal" className="flex-1">
           {showDoc && (
             <ResizablePanel defaultSize={35} minSize={20}>

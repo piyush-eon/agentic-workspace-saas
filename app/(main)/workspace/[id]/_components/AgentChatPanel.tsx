@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { MicButton } from "@/components/MicButton";
 import { useUpgradeDialog } from "@/components/UpgradeDialog";
 import { PROMPT_LIMIT_ERROR, UPGRADE_REASONS } from "@/lib/plan-limits";
+import { submitOnEnter } from "@/lib/utils";
 
 const DEFAULT_WIDTH = 360;
 const MIN_WIDTH = 280;
@@ -62,17 +63,9 @@ export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; is
         className="absolute inset-y-0 left-0 w-1 cursor-col-resize hover:bg-primary/40"
       />
 
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/6 px-4">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/brand/mascot-dark.png"
-            alt=""
-            width={18}
-            height={18}
-            className="size-[18px]"
-          />
-          <span className="text-sm font-medium">Outpost Agent</span>
-        </div>
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-white/6 px-4 text-sm font-medium">
+        <Image src="/brand/mascot-dark.png" alt="" width={18} height={18} className="size-4.5" />
+        Outpost Agent
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -169,12 +162,7 @@ export function AgentChatPanel({ chat, isReady }: { chat: WorkspaceAgentChat; is
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
+          onKeyDown={submitOnEnter(handleSend)}
           placeholder="Ask the agent..."
           rows={1}
           disabled={!isReady}

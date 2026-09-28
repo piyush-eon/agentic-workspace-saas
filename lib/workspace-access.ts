@@ -1,5 +1,6 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { workspaceOwnerSelect } from "@/lib/billing";
 
 // Org workspaces are open to every member of that org; personal (org-less) ones only to their creator.
 export async function canAccessWorkspace(workspaceId: string) {
@@ -8,7 +9,7 @@ export async function canAccessWorkspace(workspaceId: string) {
 
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
-    select: { clerkOrgId: true, creator: { select: { clerkId: true } } },
+    select: workspaceOwnerSelect,
   });
   if (!workspace) return false;
 

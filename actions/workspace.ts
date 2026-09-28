@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { checkUser } from "@/actions/check-user";
 import { canAccessWorkspace } from "@/lib/workspace-access";
+import { scopeWhere } from "@/lib/workspace-scope";
 import { prisma } from "@/lib/prisma";
 import { WorkspaceStatus } from "@/lib/generated/prisma/enums";
-import { getEntitlements, workspaceOwnerId } from "@/lib/billing";
+import { getEntitlements, getWorkspaceOwnerId, workspaceOwnerSelect } from "@/lib/billing";
 import { FREE_WORKSPACE_LIMIT, type LimitError } from "@/lib/plan-limits";
 
 // Workspaces are listed on both the dashboard (recent) and the board page.
@@ -31,7 +32,7 @@ export async function createWorkspace(
 
   // Belongs to whichever org is active; no active org means a personal workspace.
   const { orgId } = await auth();
-  const scope = orgId ? { clerkOrgId: orgId } : { clerkOrgId: null, creatorId: user.id };
+  const scope = scopeWhere(orgId, user.id);
 
   const { unlimitedWorkspaces } = await getEntitlements(orgId ?? user.clerkId);
   if (!unlimitedWorkspaces && (await prisma.workspace.count({ where: scope })) >= FREE_WORKSPACE_LIMIT) {
@@ -88,7 +89,7 @@ export async function deleteWorkspace(workspaceId: string) {
 
   const workspace = await prisma.workspace.findUniqueOrThrow({
     where: { id: workspaceId },
-    select: { clerkOrgId: true, creator: { select: { clerkId: true } } },
+    select: workspaceOwnerSelect,
   });
   const isCreator = workspace.creator.clerkId === userId;
   // orgRole describes the active org only, so it counts only for a workspace in that org.
@@ -123,12 +124,8 @@ export async function setWorkspaceSharing(
 ): Promise<{ shareToken: string | null } | { limit: LimitError }> {
   if (!(await canAccessWorkspace(workspaceId))) throw new Error("Workspace not found");
 
-  if (enabled) {
-    const workspace = await prisma.workspace.findUniqueOrThrow({
-      where: { id: workspaceId },
-      select: { clerkOrgId: true, creator: { select: { clerkId: true } } },
-    });
-    if (!(await getEntitlements(workspaceOwnerId(workspace))).publicSharing) return { limit: "sharing" };
+  if (enabled && !(await getEntitlements(await getWorkspaceOwnerId(workspaceId))).publicSharing) {
+    return { limit: "sharing" };
   }
 
   const { shareToken } = await prisma.workspace.update({

@@ -5,10 +5,10 @@ import { notFound } from "next/navigation";
 import type { Block } from "@blocknote/core";
 import type { TLEditorSnapshot } from "tldraw";
 import { prisma } from "@/lib/prisma";
-import { getEntitlements, workspaceOwnerId } from "@/lib/billing";
+import { getEntitlements, workspaceOwnerId, workspaceOwnerSelect } from "@/lib/billing";
 import { Badge } from "@/components/ui/badge";
 import { DocViewer } from "@/components/DocEditorLoader";
-import { CanvasViewer } from "@/components/CanvasViewer";
+import { CanvasViewer } from "./_components/CanvasViewer";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 // Shared links are private-by-obscurity, so keep them out of search engines.
@@ -22,8 +22,7 @@ export default async function SharedPage({ params }: PageProps<"/shared/[token]"
     where: { shareToken: token },
     select: {
       name: true,
-      clerkOrgId: true,
-      creator: { select: { clerkId: true } },
+      ...workspaceOwnerSelect,
       doc: { select: { content: true } },
       canvas: { select: { content: true } },
     },

@@ -10,8 +10,15 @@ const PROMPT_FEATURES = [
 
 // Everything is scoped to an "owner": a Clerk org id for org workspaces, or a Clerk user id for
 // personal ones. Clerk prefixes its ids, so they can't collide.
+export const workspaceOwnerSelect = { clerkOrgId: true, creator: { select: { clerkId: true } } } as const;
+
 export function workspaceOwnerId(workspace: { clerkOrgId: string | null; creator: { clerkId: string } }) {
   return workspace.clerkOrgId ?? workspace.creator.clerkId;
+}
+
+export async function getWorkspaceOwnerId(workspaceId: string) {
+  const workspace = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, select: workspaceOwnerSelect });
+  return workspaceOwnerId(workspace);
 }
 
 // The owner's plan features, looked up from Clerk on the server. This works for any owner, not

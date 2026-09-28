@@ -7,8 +7,8 @@ import {
   KanbanSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CanvasMock, DocsMock, BoardMock } from "@/components/SurfaceVisuals";
-import { MapAnnotations } from "@/components/MapAnnotations";
+import { CanvasMock, DocsMock, BoardMock } from "./_components/SurfaceVisuals";
+import { MapAnnotations } from "./_components/MapAnnotations";
 import { PricingPlans } from "@/components/PricingPlans";
 
 export default function Home() {
@@ -101,7 +101,6 @@ export default function Home() {
 
           <div className="mt-16 flex flex-col gap-20">
             <SurfaceRow
-              reverse={false}
               icon={<LayoutGrid className="size-5" />}
               title="Canvas"
               description="An infinite whiteboard where the agent drafts flowcharts, architecture diagrams, and journeys shape by shape, instead of hiding it all behind a black-box generate button."
@@ -125,7 +124,6 @@ export default function Home() {
               visual={<DocsMock />}
             />
             <SurfaceRow
-              reverse={false}
               icon={<KanbanSquare className="size-5" />}
               title="Team board"
               description="Every workspace in your organization lives on one shared board. Drag it from planning to done, and jump in with teammates, with live cursors on the canvas and in the doc."
@@ -226,7 +224,7 @@ function SurfaceRow({
   title: string;
   description: string;
   bullets: string[];
-  reverse: boolean;
+  reverse?: boolean;
   visual: React.ReactNode;
 }) {
   return (
@@ -253,7 +251,7 @@ function SurfaceRow({
           ))}
         </ul>
       </div>
-      {/* Mock UI screenshot stand-in — swap for a real per-surface screenshot once the app UI exists */}
+      {/* Static mock UI for each surface */}
       <div className="flex-1">{visual}</div>
     </div>
   );
@@ -280,7 +278,7 @@ function Step({
 }) {
   return (
     <div>
-      {/* Waypoint on a dashed trail, so the four steps read as one route */}
+      {/* Waypoint on a dashed trail, so the steps read as one route */}
       <div className="flex items-center gap-3">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-primary/60 font-mono text-[10px] text-primary">
           {number}

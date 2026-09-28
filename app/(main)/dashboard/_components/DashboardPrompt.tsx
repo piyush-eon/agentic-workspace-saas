@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { MicButton } from "@/components/MicButton";
 import { useUpgradeDialog } from "@/components/UpgradeDialog";
 import { UPGRADE_REASONS } from "@/lib/plan-limits";
+import { submitOnEnter } from "@/lib/utils";
 
 const MAX_NAME_LENGTH = 48;
 
@@ -37,7 +38,7 @@ export function DashboardPrompt() {
   const { fn: createWorkspaceFn, loading } = useFetch(createWorkspace);
   const openUpgrade = useUpgradeDialog();
   const busy = loading ?? false;
-
+  
   const handleSubmit = async () => {
     const trimmed = prompt.trim();
     if (!trimmed || busy) return;
@@ -49,7 +50,6 @@ export function DashboardPrompt() {
 
   return (
     <section className="topo-bg mx-auto mb-14 w-full max-w-4xl px-6 py-10 text-center">
-
       <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">What are we planning today?</h2>
       <p className="mt-2 text-muted-foreground">Describe it, and the agent drafts the doc and the canvas for you.</p>
 
@@ -57,12 +57,7 @@ export function DashboardPrompt() {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit();
-            }
-          }}
+          onKeyDown={submitOnEnter(handleSubmit)}
           placeholder="e.g. Design the database for a food delivery app and document it"
           rows={2}
           disabled={busy}

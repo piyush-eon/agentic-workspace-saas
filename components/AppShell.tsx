@@ -3,8 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 
-// Workspace and shared-link routes go full-screen (own floating toolbar instead of the global header), so both
-// the header and its reserved top padding need to disappear together on those routes.
+// Workspace and shared-link pages are full-screen with their own header, so they skip the site header.
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isFullScreenRoute = pathname?.startsWith("/workspace/") || pathname?.startsWith("/shared/");
