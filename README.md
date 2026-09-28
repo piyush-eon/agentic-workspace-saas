@@ -11,9 +11,6 @@ Built step by step in a YouTube tutorial on the **roadsidecoder** channel.<br />
 
 </div>
 
-> [!NOTE]
-> Outpost is **tutorial code**, built to teach how an agentic app works end to end. It runs well and is a solid starting point, but it takes a few deliberate shortcuts to keep the video focused. See [Tutorial shortcuts](#tutorial-shortcuts) before using it in production.
-
 ## What you'll build
 
 - **An AI agent that works on two surfaces.** Ask for "a database schema, documented" and it draws the ERD on the canvas and writes the spec in the doc. Name a surface ("just the doc") and it sticks to it.
@@ -149,15 +146,15 @@ prisma/                     Database schema and migrations
 
 **How the agent works:** the agent's tools have no server-side implementation. Gemini decides which tool to call, and the browser runs it against the live canvas and doc editors, so collaborators see changes appear in real time. Every request sends a compact summary of both surfaces, so the agent can edit what's already there.
 
-## Tutorial shortcuts
+## Scaling up
 
-These are deliberate simplifications. Each one has a straightforward production upgrade:
+Outpost runs on free tiers out of the box. As you grow, here's how to scale each piece:
 
-| Shortcut                                                                                                                                                                              | What to do for production                                                                                                                                               |
+| Today                                                                                                                                                                                 | To scale up                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The canvas syncs through **tldraw's hosted demo server** (`useSyncDemo`): public rooms, data may be wiped, and no uptime guarantee. The canvas is also saved to Postgres as a backup. | Deploy your own sync server from tldraw's template (`npm create tldraw@latest -- --template sync-cloudflare`) and switch to `useSync` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. |
+| The canvas syncs through **tldraw's hosted sync server** (`useSyncDemo`), with every canvas also saved to Postgres. | Deploy your own sync server from tldraw's template (`npm create tldraw@latest -- --template sync-cloudflare`) and switch to `useSync` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. |
 | Doc collaboration uses **public** Supabase Realtime channels.                                                                                                                         | Use private channels with Supabase Realtime Authorization, and connect Clerk to Supabase so clients join with their Clerk session.                                      |
-| **PDF export** is only locked in the UI, since it runs in the browser.                                                                                                                | Fine for most apps. Move export to the server if it must be strictly enforced.                                                                                          |
+| **PDF export** runs in the browser, so it's fast and costs no server time.                                                                                                            | Move export to the server if you want it enforced server-side too.                                                                                                      |
 | Billing uses Clerk's **development gateway**.                                                                                                                                         | Connect your own Stripe account in Clerk before taking real payments.                                                                                                   |
 | Clerk Billing is in public beta, and its components are **experimental**.                                                                                                             | `@clerk/nextjs` and `@clerk/ui` are pinned to exact versions. Keep them pinned, and test before upgrading.                                                              |
 
