@@ -1,11 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  LayoutGrid,
-  FileText,
-  KanbanSquare,
-} from "lucide-react";
+import { ArrowRight, LayoutGrid, FileText, KanbanSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CanvasMock, DocsMock, BoardMock } from "./_components/SurfaceVisuals";
 import { MapAnnotations } from "./_components/MapAnnotations";
@@ -18,7 +13,7 @@ export default function Home() {
       <section className="topo-bg px-6 pt-10 pb-24 md:px-10 md:pt-16">
         <MapAnnotations />
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-          <SectionLabel>Expedition 01 · Early access</SectionLabel>
+          <SectionLabel>Early access</SectionLabel>
 
           <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
             An <span className="text-primary">outpost</span> for whatever

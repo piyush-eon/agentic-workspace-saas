@@ -46,7 +46,7 @@
 | `/workspaces` | Kanban board of all the active org's workspaces (see "Workspace board") |
 | `/workspace/[id]` | Doc + canvas side by side, `?view=doc\|canvas` toggle, agent panel |
 | `/shared/[token]` | Public read-only view of the doc and canvas (see "Sharing & PDF Export") |
-| `/api/*` | Route handlers (agent runs, CRUD, webhooks) |
+| `/api/agent` | The agent route (Gemini, tools, prompt limits) |
 
 ## Core Features
 
