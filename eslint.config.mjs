@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The canvas sync server is its own Cloudflare Worker project.
+    "tldraw-sync/**",
   ]),
 ]);
 

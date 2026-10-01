@@ -141,6 +141,7 @@ lib/
   plan-limits.ts            Free limits and upgrade messages
   supabase-yjs-provider.ts  Syncs the doc over Supabase Realtime
 prisma/                     Database schema and migrations
+tldraw-sync/                The canvas sync server (a Cloudflare Worker)
 ```
 
 **How the agent works:** the agent's tools have no server-side implementation. Gemini decides which tool to call, and the browser runs it against the live canvas and doc editors, so collaborators see changes appear in real time. Every request sends a compact summary of both surfaces, so the agent can edit what's already there.
@@ -151,7 +152,6 @@ Outpost runs on free tiers out of the box. As you grow, here's how to scale each
 
 | Today                                                                                                                                                                                 | To scale up                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The canvas syncs through **tldraw's hosted sync server** (`useSyncDemo`), with every canvas also saved to Postgres. | Deploy your own sync server from tldraw's template (`npm create tldraw@latest -- --template sync-cloudflare`) and switch to `useSync` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. |
 | Doc collaboration uses **public** Supabase Realtime channels.                                                                                                                         | Use private channels with Supabase Realtime Authorization, and connect Clerk to Supabase so clients join with their Clerk session.                                      |
 | **PDF export** runs in the browser, so it's fast and costs no server time.                                                                                                            | Move export to the server if you want it enforced server-side too.                                                                                                      |
 | Billing uses Clerk's **development gateway**.                                                                                                                                         | Connect your own Stripe account in Clerk before taking real payments.                                                                                                   |
@@ -159,9 +159,18 @@ Outpost runs on free tiers out of the box. As you grow, here's how to scale each
 
 ## Deploying
 
-1. Deploy to [Vercel](https://vercel.com) and add the same environment variables.
-2. Get a free **hobby license** from [tldraw.dev](https://tldraw.dev/pricing) and set `NEXT_PUBLIC_TLDRAW_LICENSE_KEY`. Without a key, tldraw shows a "Get a license for production" watermark.
-3. For real payments, connect Stripe in Clerk Billing.
+1. Deploy the canvas sync server (free, no domain needed) and set `NEXT_PUBLIC_TLDRAW_SYNC_URL` to the URL it prints:
+
+   ```bash
+   cd tldraw-sync
+   npm install
+   npx wrangler login
+   npm run deploy
+   ```
+
+2. Deploy to [Vercel](https://vercel.com) and add the same environment variables.
+3. Get a free **hobby license** from [tldraw.dev](https://tldraw.dev/pricing) and set `NEXT_PUBLIC_TLDRAW_LICENSE_KEY`. Without a key, tldraw shows a "Get a license for production" watermark.
+4. For real payments, connect Stripe in Clerk Billing.
 
 ## Scripts
 

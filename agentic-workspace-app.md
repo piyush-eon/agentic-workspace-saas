@@ -139,19 +139,20 @@ No exotic tech required — it's clever reuse of the multiplayer presence system
   - **Hobby license** — free, permanent, but shows a **tldraw watermark** in production. This is what we'll use.
   - **Trial license** — free, no watermark, but expires 100 days after issuance (enforced by the SDK's runtime license check reading the key you pass into `<Tldraw licenseKey="..." />`, not by npm/package restrictions). Not suitable for a tutorial meant to stay working long-term.
   - **Commercial license** — paid, no watermark, custom sales-quote pricing. Needed only for real production/monetized use.
-- **No key at all** in production → same watermark as hobby tier anyway, so there's no reason to skip the free signup — it's a ~2 minute form on tldraw.dev (email/GitHub signup, then request hobby license), no payment info required.
+- **No key at all (or a key not valid for the domain)** in production → tldraw v5 hides the canvas entirely (its `LicenseGate` renders nothing; localhost is exempt). So the free hobby key, issued for the deployed domain, is required, and `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` must be set in Vercel before the build. Signup is free — it's a ~2 minute form on tldraw.dev (email/GitHub signup, then request hobby license), no payment info required.
 - **Decision for this project:** build and record the entire tutorial without ever signing up or showing a license key — nothing is gated in local dev. Only mention licensing briefly **at the end**, when discussing production deployment ("tldraw needs a free license key for production, grab one from their site, it's free") — a 10-second honest heads-up rather than a mid-tutorial interruption. Get the actual hobby key off-camera after recording, drop into env vars for the live deployed demo.
 - Alternative considered and rejected (but worth remembering): **Excalidraw** is MIT-licensed, fully free forever, no watermark, no key — trade-off is a less polished SDK/API for custom app-building and less AI-native tooling around it currently. Could revisit if licensing friction becomes a bigger issue than expected.
 
 ## tldraw Sync Server
 
-- **Decision:** the canvas syncs through tldraw's hosted **demo** server (`useSyncDemo` from `@tldraw/sync`), including after the Vercel deployment. Deploying our own sync server is out of scope for the tutorial.
-- **Why it's acceptable here:** it's a tutorial, and the demo server works from any domain with zero setup. Room ids are `outpost-<workspaceId>`.
-- **Known limits (mention in the video):**
-  - Rooms are public: anyone with a room id can join, so Clerk org access checks don't apply to the live canvas.
-  - The demo server wipes data periodically. The Postgres canvas autosave is the safety net, since an empty room gets re-seeded from Postgres on load.
-  - tldraw documents it as prototyping-only, with no uptime guarantees.
-- **Tell viewers:** for a real product, deploy your own sync server with tldraw's Cloudflare template (`npm create tldraw@latest -- --template sync-cloudflare`), register the custom `entity-table` shape on it, check Clerk org membership before a client joins a room, then swap `useSyncDemo` for `useSync({ uri })` in `app/(main)/workspace/[id]/_components/CanvasEditor.tsx`. Once the server stores the canvas, the Postgres canvas autosave can be removed.
+- **Decision (2026-10-01):** the canvas syncs through **our own sync server**, a Cloudflare Worker in `tldraw-sync/`, deployed free to a `*.workers.dev` URL (no custom domain). `NEXT_PUBLIC_TLDRAW_SYNC_URL` points the app at it; left empty, the app falls back to tldraw's public demo server (`useSyncDemo`).
+- **Why:** an ISP (Excitel, India) started DNS-blocking `demo.tldraw.xyz`, so live sync broke for viewers on it. The demo server is also prototyping-only: public rooms, periodic wipes, no uptime guarantee.
+- **How it works:** adapted from tldraw's official template (github.com/tldraw/tldraw-sync-cloudflare). `/connect/<roomId>` routes to one **SQLite-backed Durable Object** per room (`TldrawRoom`), which runs `TLSocketRoom` from `@tldraw/sync-core`, saves the room to its own storage, and hibernates when idle. Durable Objects with SQLite are on the Workers **free plan**.
+- **Kept free:** no R2 bucket (R2 needs a card). Images pasted onto the canvas are stored inside the room as base64 (`inlineBase64AssetStore`). No bookmark unfurling.
+- **Custom shape:** the server validates every change, so it registers the `entity-table` props too (a copy of `components/EntityTable/EntityTableShape.ts`; keep the two in sync). Bindings are registered so arrows can attach.
+- **Versions:** `@tldraw/sync-core`, `tlschema` and `validate` are pinned to the app's tldraw version (5.4.1); client and server must speak the same protocol.
+- **Still open:** rooms aren't access-checked yet (anyone with a room id can join; ids are unguessable cuids). Next step: verify the Clerk session and org membership in the Worker before accepting the WebSocket. The Postgres canvas autosave stays as a backup.
+- **Deploy:** `cd tldraw-sync && npm install && npx wrangler login && npm run deploy`, then set `NEXT_PUBLIC_TLDRAW_SYNC_URL` to the printed `https://outpost-tldraw-sync.<subdomain>.workers.dev` (locally and in Vercel).
 
 ## Billing (Clerk Billing)
 

@@ -1,0 +1,14 @@
+# The canvas sync server: one Durable Object per workspace canvas.
+# Deploys free to <name>.<your-subdomain>.workers.dev, no custom domain needed.
+name = "outpost-tldraw-sync"
+main = "src/worker.ts"
+compatibility_date = "2025-05-08"
+compatibility_flags = ["nodejs_compat"]
+
+[durable_objects]
+bindings = [{ name = "TLDRAW_ROOM", class_name = "TldrawRoom" }]
+
+# SQLite-backed Durable Objects are included in the Workers free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TldrawRoom"]

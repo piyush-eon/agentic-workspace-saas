@@ -12,11 +12,14 @@ import {
   UserRecordType,
   DefaultToolbar,
   DefaultToolbarContent,
+  inlineBase64AssetStore,
+  defaultShapeUtils,
+  defaultBindingUtils,
   type Editor,
   type TLEditorSnapshot,
   type TLComponents,
 } from "tldraw";
-import { useSyncDemo } from "@tldraw/sync";
+import { useSync, useSyncDemo } from "@tldraw/sync";
 import "tldraw/tldraw.css";
 import { saveCanvasContent } from "@/actions/canvas";
 import type { Prisma } from "@/lib/generated/prisma/client";
@@ -29,6 +32,28 @@ import { colorForUser } from "@/lib/utils";
 const SAVE_DEBOUNCE_MS = 1000;
 
 const shapeUtils = [EntityTableShapeUtil];
+
+// Our own sync server (the tldraw-sync/ Cloudflare Worker). Without it, tldraw's public demo
+// server is used: fine for trying things out, but rooms there are public and get wiped.
+const SYNC_URL = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL;
+
+// Unlike useSyncDemo, useSync doesn't add tldraw's built-in shapes itself. Built once here:
+// a new array on every render would make useSync rebuild the store in a loop.
+const syncShapeUtils = [...defaultShapeUtils, ...shapeUtils];
+
+type SyncOptions = { roomId: string; users?: Parameters<typeof useSyncDemo>[0]["users"] };
+
+// Chosen once at load, so it's always the same hook. Images are stored inside the room.
+const useCanvasSync = SYNC_URL
+  ? ({ roomId, users }: SyncOptions) =>
+      useSync({
+        uri: `${SYNC_URL}/connect/${roomId}`,
+        assets: inlineBase64AssetStore,
+        shapeUtils: syncShapeUtils,
+        bindingUtils: defaultBindingUtils,
+        users,
+      })
+  : ({ roomId, users }: SyncOptions) => useSyncDemo({ roomId, shapeUtils, users });
 
 // A cleaner, single-page canvas: no style panel, page menu or main menu, and a vertical toolbar
 // on the left with our Add table button.
@@ -89,10 +114,8 @@ export function CanvasEditor({
     });
   }, [userId, userName]);
 
-  // Uses tldraw's hosted demo sync server — fine for this tutorial, but rooms are public and
-  // data gets wiped (Postgres autosave below re-seeds empty rooms). For production, deploy your
-  // own server (tldraw's Cloudflare template) and swap this for useSync({ uri: "<your-server>" }).
-  const store = useSyncDemo({ roomId: `outpost-${workspaceId}`, shapeUtils, users });
+  // The Postgres autosave below also re-seeds a room that starts empty.
+  const store = useCanvasSync({ roomId: `outpost-${workspaceId}`, users });
 
   const handleMount = (editor: Editor) => {
     setCanvasEditor(editor);
