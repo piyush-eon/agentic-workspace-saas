@@ -201,7 +201,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-muted-foreground md:px-10">
-        © {new Date().getFullYear()} Outpost. Built in public.
+        Made with ❤️ by RoadsideCoder
       </footer>
     </div>
   );
