@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Show, UserButton, OrganizationSwitcher, useAuth } from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton, OrganizationSwitcher, useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { PlanButton } from "@/components/PlanButton";
 
@@ -28,13 +28,14 @@ export function SiteHeader() {
       )}
       <div className="flex items-center gap-3">
         {/* <Show> swaps branches once Clerk resolves the session, so the header reflects real auth state */}
+        {/* Modal mode opens Clerk's form over the page; /sign-in and /sign-up stay for redirects. */}
         <Show when="signed-out">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/sign-up">Get started</Link>
-          </Button>
+          <SignInButton mode="modal">
+            <Button variant="ghost" size="sm">Sign in</Button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <Button size="sm">Get started</Button>
+          </SignUpButton>
         </Show>
         <Show when="signed-in">
           {/* Membership-optional: hidePersonal=false lets a solo user stay on their personal
