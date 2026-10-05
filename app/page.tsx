@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, LayoutGrid, FileText, KanbanSquare } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CanvasMock, DocsMock, BoardMock } from "./_components/SurfaceVisuals";
 import { MapAnnotations } from "./_components/MapAnnotations";
 import { PricingPlans } from "@/components/PricingPlans";
+import { AUDIENCES, STEPS, SURFACES } from "./_data/landing";
 
 export default function Home() {
   return (
@@ -41,7 +41,7 @@ export default function Home() {
             smaller, with MP4 as the fallback for browsers without VP9. */}
         <div className="survey-frame scroll-tilt mx-auto mt-16 max-w-5xl">
           {/* A slightly narrower frame than the 16:9 video, so object-cover trims the sides. */}
-          <div className="aspect-[16/9.25] overflow-hidden rounded-2xl border border-white/10 bg-card shadow-2xl shadow-black/40">
+          <div className="aspect-16/9.25 overflow-hidden rounded-2xl border border-white/10 bg-card shadow-2xl shadow-black/40">
             <video
               autoPlay
               muted
@@ -65,17 +65,15 @@ export default function Home() {
             Built for teams who sketch first and write specs second
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-muted-foreground/70">
-            <span>Product teams</span>
-            <span>Founders</span>
-            <span>Solo builders</span>
-            <span>Design agencies</span>
-            <span>Consultants</span>
+            {AUDIENCES.map((audience) => (
+              <span key={audience}>{audience}</span>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Canvas + docs + team — the proof that this is a "workspace," not just a canvas app.
-          Each row alternates image side so the section doesn't read as a flat repeating grid. */}
+          The rows' copy lives in _data/landing.ts. */}
       <section
         id="product"
         className="border-t border-white/10 px-6 py-24 md:px-10"
@@ -95,40 +93,15 @@ export default function Home() {
           </div>
 
           <div className="mt-16 flex flex-col gap-20">
-            <SurfaceRow
-              icon={<LayoutGrid className="size-5" />}
-              title="Canvas"
-              description="An infinite whiteboard where the agent drafts flowcharts, architecture diagrams, and journeys shape by shape, instead of hiding it all behind a black-box generate button."
-              bullets={[
-                "Templates for flowcharts, ERDs, architecture, and org charts",
-                "Follow-up edits: ask for changes and it edits shapes in place",
-                "ERD tables with typed columns and key badges",
-              ]}
-              visual={<CanvasMock />}
-            />
-            <SurfaceRow
-              reverse
-              icon={<FileText className="size-5" />}
-              title="Docs"
-              description="Turn any diagram into a written spec. The agent drafts, rewrites, and summarizes in a block-based editor, pulling structure straight from what's on the canvas."
-              bullets={[
-                "Block-based editor: headings, lists, checklists, tables, code",
-                '"Write this diagram up as a spec" pulls structure automatically',
-                "Rewrite or summarize any section on command",
-              ]}
-              visual={<DocsMock />}
-            />
-            <SurfaceRow
-              icon={<KanbanSquare className="size-5" />}
-              title="Team board"
-              description="Every workspace in your organization lives on one shared board. Drag it from planning to done, and jump in with teammates, with live cursors on the canvas and in the doc."
-              bullets={[
-                "One kanban board for every workspace in your org",
-                "Live cursors and edits on the canvas and in docs",
-                "Anyone in your org can join any workspace instantly",
-              ]}
-              visual={<BoardMock />}
-            />
+            {SURFACES.map(({ icon: Icon, visual: Visual, ...surface }, i) => (
+              <SurfaceRow
+                key={surface.title}
+                reverse={i % 2 === 1}
+                icon={<Icon className="size-5" />}
+                visual={<Visual />}
+                {...surface}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -144,19 +117,15 @@ export default function Home() {
             Watch it think, not just the result
           </h2>
           <div className="mt-12 grid gap-10 md:grid-cols-3">
-            <Step number="01" title="Describe what you need">
-              Just say &ldquo;Map out our onboarding flow.&rdquo; Plain
-              language, no diagramming syntax to learn. Or just talk: voice
-              input works too.
-            </Step>
-            <Step number="02" title="Watch the agent draw">
-              Shapes appear one by one as the agent works, the same way a
-              teammate would draw over a call.
-            </Step>
-            <Step number="03" title="Keep iterating together">
-              Ask for changes, pull it into a doc, or bring in your team. Same
-              agent, same context.
-            </Step>
+            {STEPS.map((step, i) => (
+              <Step
+                key={step.title}
+                number={String(i + 1).padStart(2, "0")}
+                title={step.title}
+              >
+                {step.body}
+              </Step>
+            ))}
           </div>
         </div>
       </section>
