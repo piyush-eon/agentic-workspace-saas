@@ -2,9 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapAnnotations } from "./_components/MapAnnotations";
-import { PricingPlans } from "@/components/PricingPlans";
+import { PricingTable } from "@clerk/nextjs";
 import { AUDIENCES, STEPS, SURFACES } from "./_data/landing";
+
+// Amber pill for the active pricing tab, like the rest of the site's primary buttons.
+const PRICING_TAB =
+  "rounded-full px-5 py-1.5 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground";
 
 export default function Home() {
   return (
@@ -130,7 +135,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing: the same plans, prices and checkout as the pricing page, straight from Clerk */}
+      {/* Pricing: Clerk's own pricing table, with a tab each for personal and team plans */}
       <section
         id="pricing"
         className="border-t border-white/10 px-6 py-24 md:px-10"
@@ -144,7 +149,25 @@ export default function Home() {
             Upgrade just yourself, or your whole team, billed per member.
           </p>
         </div>
-        <PricingPlans />
+        <Tabs
+          defaultValue="user"
+          className="mx-auto max-w-5xl items-center gap-10"
+        >
+          <TabsList className="h-auto rounded-full border border-white/10 bg-white/3 p-1">
+            <TabsTrigger value="user" className={PRICING_TAB}>
+              Personal
+            </TabsTrigger>
+            <TabsTrigger value="organization" className={PRICING_TAB}>
+              Team
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="user" className="w-full">
+            <PricingTable for="user" />
+          </TabsContent>
+          <TabsContent value="organization" className="w-full">
+            <PricingTable for="organization" />
+          </TabsContent>
+        </Tabs>
       </section>
 
       {/* Closing CTA, back over the map so the page opens and closes on it */}
