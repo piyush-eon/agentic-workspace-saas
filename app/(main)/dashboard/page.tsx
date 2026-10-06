@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { KanbanSquare, Plus } from "lucide-react";
+import { compareDesc } from "date-fns";
 import { checkUser } from "@/actions/check-user";
 import { prisma } from "@/lib/prisma";
 import { getWorkspaceScope } from "@/lib/workspace-scope";
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
   const workspaces = await prisma.workspace.findMany({ where, select: workspaceCardSelect });
   const recent = workspaces
     .map(withLastActivity)
-    .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime())
+    .sort((a, b) => compareDesc(a.lastActivity, b.lastActivity))
     .slice(0, RECENT_COUNT);
 
   return (

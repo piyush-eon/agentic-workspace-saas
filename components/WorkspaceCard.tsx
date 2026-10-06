@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import type { WorkspaceStatus } from "@/lib/generated/prisma/enums";
 import { statusTitle } from "@/lib/workspace-status";
-import { timeAgo } from "@/lib/utils";
 
 export type WorkspaceCardData = {
   id: string;
@@ -53,7 +53,7 @@ export function WorkspaceCard({
           <LayoutGrid className="size-3.5 shrink-0 text-primary" />
           <span className="truncate" suppressHydrationWarning>
             {showStatus && `${statusTitle(workspace.status)} · `}
-            {timeAgo(workspace.lastActivity)}
+            {formatDistanceToNow(workspace.lastActivity, { addSuffix: true })}
           </span>
         </span>
         <CreatorAvatar creator={workspace.creator} />
