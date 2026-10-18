@@ -7,7 +7,7 @@
 **An agentic workspace: chat with an AI agent that draws on a canvas and writes docs, while your team works alongside it in real time.**
 
 Built step by step in a YouTube tutorial on the **roadsidecoder** channel.<br />
-▶ **Watch the tutorial:** _link coming soon_
+▶ **Watch the tutorial:** https://youtu.be/vNXrFMSAsOA
 
 </div>
 
